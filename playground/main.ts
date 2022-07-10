@@ -2,7 +2,7 @@ import './index.css'
 import * as THREE from 'three'
 import { ammo } from '../src/main'
 import { animate } from './renderer'
-import { mesh } from './boxes'
+import { mesh, bodies } from './boxes'
 import * as constants from './constants'
 
 const quaternion = new THREE.Quaternion()
@@ -19,27 +19,43 @@ ammo.on('tick', (data: Float32Array) => {
   mesh.instanceMatrix.needsUpdate = true
 })
 
-await ammo.setSimulationSpeed(60)
-await ammo.setGravity(0, -9.8, 0)
+bodies.push({
+  id: -1,
+  name: 'floor',
+  type: ammo.BODYTYPE_STATIC,
+  shape: ammo.BODYSHAPE_BOX,
+  mass: 0,
+  restitution: 0.5,
+  friction: 1,
+  linearDamping: 0,
+  angularDamping: 0,
+  linkedId: -1,
+  transform: new Float32Array([0, 0, 0, 0, 0, 0, 1]),
+  halfExtends: {
+    x: 100,
+    y: 0.1,
+    z: 100,
+  },
+  sprite: false,
+})
 
-await ammo.createRigidBodies([
-  {
-    id: -1,
-    name: 'floor',
-    type: ammo.BODYTYPE_STATIC,
-    shape: ammo.BODYSHAPE_BOX,
-    mass: 0,
-    restitution: 0,
-    friction: 1,
-    linearDamping: 0,
-    angularDamping: 0,
-    linkedId: -1,
-    transform: new Float32Array([0, 0, 0, 0, 0, 0, 1]),
-    geometry: new Float32Array([100, 0.1, 100]),
-    sprite: false,
-  }
-])
-
+await ammo.init()
+await ammo.createRigidBodies(bodies)
 await ammo.run()
 
 animate()
+
+const M = 20
+
+document.addEventListener('click', () => {
+  const ids = new Uint16Array(constants.NUM_MESHES)
+  const impulses = new Float32Array(constants.NUM_MESHES * 3)
+  for (let i = 0, j = 0; i < bodies.length; i += 1, j += 3) {
+    ids[i] = bodies[i].id
+    impulses[j + 0] = (Math.random() - 0.5) * M
+    impulses[j + 1] = (Math.random() - 0.5) * M
+    impulses[j + 2] = (Math.random() - 0.5) * M
+  }
+
+  ammo.applyCentralImpulses(ids, impulses)
+})

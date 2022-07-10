@@ -2,16 +2,19 @@ import * as THREE from 'three'
 import * as constants from './constants'
 import { scene } from './renderer'
 import { ammo } from '../src/main'
-import { RigidBody } from '../src/types'
+import { Body } from '../src/types'
 
-export const meshes: THREE.Mesh[] = []
-let bodies: RigidBody[] = []
+export const bodies: Body[] = []
 
 const radius = 1
 
 const material = new THREE.MeshStandardMaterial()
 const geometry = new THREE.SphereGeometry(radius)
+
 export const mesh = new THREE.InstancedMesh(geometry, material, constants.NUM_MESHES)
+mesh.castShadow = true
+mesh.receiveShadow = true
+
 scene.add(mesh)
 
 const color = new THREE.Color()
@@ -29,7 +32,7 @@ for (let id = 0; id < constants.NUM_MESHES; id += 1) {
     angularDamping: 0.1,
     linkedId: -1,
     transform: new Float32Array([Math.random(), 1 + id, Math.random(), 0, 0, 0, 1]),
-    geometry: new Float32Array([radius]),
+    radius,
     sprite: false,
   })
 
@@ -43,6 +46,3 @@ for (let id = 0; id < constants.NUM_MESHES; id += 1) {
 }
 
 mesh.instanceColor!.needsUpdate = true
-
-await ammo.init()
-await ammo.createRigidBodies(bodies)

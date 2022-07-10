@@ -1,12 +1,17 @@
 import * as THREE from 'three'
+import Stats from 'three/examples/jsm/libs/stats.module'
 
-export const scene = new THREE.Scene()
 const camera = new THREE.PerspectiveCamera(
-  75,
+  50,
   window.innerWidth / window.innerHeight,
   0.1,
-  1000
+  100
 )
+camera.position.set(7, 10, 20)
+camera.lookAt(0, 0, 0)
+
+export const scene = new THREE.Scene()
+scene.background = new THREE.Color( 0x666666 );
 
 const dpi = window.devicePixelRatio
 const renderer = new THREE.WebGLRenderer()
@@ -19,12 +24,10 @@ renderer.toneMappingExposure = 1
 renderer.outputEncoding = THREE.sRGBEncoding
 renderer.physicallyCorrectLights = true
 renderer.shadowMap.enabled = true
-// renderer.shadowMap.type = THREE.PCFSoftShadowMap
+renderer.shadowMap.type = THREE.PCFSoftShadowMap
 
-camera.position.z = 20
-camera.position.x = 7
-camera.position.y = 10
-camera.lookAt(0, 0, 0)
+const stats = new Stats()
+document.body.append(stats.dom)
 
 const ambientLight = new THREE.AmbientLight()
 ambientLight.intensity = 0.2
@@ -50,4 +53,5 @@ directionalLight.position.set(0.5, 1, 0.5)
 export const animate = () => {
   window.requestAnimationFrame(animate)
   renderer.render(scene, camera)
+  stats.update()
 }

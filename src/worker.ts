@@ -1,7 +1,10 @@
 import AmmoLib from './ammo'
 import * as Comlink from 'comlink'
 import * as constants from './constants'
-import type { BodyShape, Flag, RigidBody, TriggerVolume } from './types'
+import type { Flag, Body, TriggerVolume } from './types'
+import {
+  createShape
+} from './lib'
 
 let ammo: typeof Ammo
 let vec1: Ammo.btVector3
@@ -38,6 +41,7 @@ const init = async () => {
     solver,
     collisionConfiguration
   )
+  setGravity(0, constants.GRAVITY_DEFAULT, 0)
 }
 
 const setSimulationSpeed = (speed: number) => {
@@ -45,46 +49,49 @@ const setSimulationSpeed = (speed: number) => {
 }
 
 const setGravity = (x: number, y: number, z: number) => {
-  world.setGravity(new ammo.btVector3(x, y, z))
+  vec1.setValue(x, y, z)
+  world.setGravity(vec1)
 }
 
-const createShape = (shape: BodyShape, geometry: Float32Array) => {
-  if (shape === constants.BODYSHAPE_BOX) {
+const setFriction = (id: number, friction: number) => {
+  const body = bodies.get(id)!
+  body.setFriction(friction)
+  body.activate()
+}
 
-    vec1.setValue(geometry[0], geometry[1], geometry[2])
-    return new ammo.btBoxShape(vec1)
+const setTransform = (id: number, bodyTransform: Float32Array, shift = 0) => {
+  const body = bodies.get(id)!
 
-  } else if (shape === constants.BODYSHAPE_MESH) {
+  vec1.setValue(0, 0, 0)
+  body.setAngularVelocity(vec1);
+	body.setLinearVelocity(vec1);
 
-    const triMesh = new ammo.btTriangleMesh()
-    for (let i = 0, l = geometry.length; i < l; i += 9) {
-      vec1.setValue(geometry[i + 0], geometry[i + 1], geometry[i + 2])
-      vec2.setValue(geometry[i + 3], geometry[i + 4], geometry[i + 5])
-      vec3.setValue(geometry[i + 6], geometry[i + 7], geometry[i + 8])
-      triMesh.addTriangle(vec1, vec2, vec3)
-    }
+  vec1.setValue(bodyTransform[shift + 0], bodyTransform[shift + 1], bodyTransform[shift + 2])
+  quat.setValue(bodyTransform[shift + 3], bodyTransform[shift + 4], bodyTransform[shift + 5], bodyTransform[shift + 6])
+  transform.setOrigin(vec1)
+  transform.setRotation(quat)
+  body.setWorldTransform(transform)
 
-    const useQuantizedAabbCompression = true
-    return new ammo.btBvhTriangleMeshShape(triMesh, useQuantizedAabbCompression)
+  if (body.type === constants.BODYTYPE_KINEMATIC) {
+    body.getMotionState().setWorldTransform(transform)
+  }
 
-  } else if (shape === constants.BODYSHAPE_SPHERE) {
+  body.activate()
+}
 
-    return new ammo.btSphereShape(geometry[0])
-
-  } else {
-
-    throw new Error('Invalid shape.')
-
+const setTransforms = (ids: Uint16Array, transforms: Float32Array) => {
+  for (let i = 0, shift = 0, l = ids.length; i < l; i += 1, shift += 7) {
+    setTransform(ids[i], transforms, shift)
   }
 }
 
-const createBody = (data: RigidBody, inertia: boolean, flag?: Flag) => {
+const createBody = (data: Body, inertia: boolean, flag?: Flag) => {
   const { transform: bodyTransform } = data
 
   let localInertia: Ammo.btVector3 | undefined
 
-  const shape = createShape(data.shape, data.geometry)
-  shape.setMargin(0.0)
+  const shape = createShape(ammo, data)
+  shape.setMargin(constants.MARGIN_DEFAULT)
 
   if (inertia) {
     localInertia = new ammo.btVector3(0, 0, 0)
@@ -123,7 +130,7 @@ const createBody = (data: RigidBody, inertia: boolean, flag?: Flag) => {
   return rigidbody
 }
 
-const createRigidBodies = (objects: RigidBody[]) => {
+const createRigidBodies = (objects: Body[]) => {
   let flag: Flag | undefined
   let body: Ammo.btRigidBody
   let inertia = false
@@ -156,13 +163,13 @@ const createRigidBodies = (objects: RigidBody[]) => {
   }
 }
 
-const createTriggerVolumes = (objects: TriggerVolume[]) => {
+const createTriggers = (objects: TriggerVolume[]) => {
   const group = constants.BODYGROUP_STATIC
   const mask = constants.BODYMASK_NOT_STATIC
 
   for (const data of objects) {
-    const shape = createShape(data.shape, data.geometry)
-    shape.setMargin(0.0)
+    const shape = createShape(ammo, data)
+    shape.setMargin(constants.MARGIN_DEFAULT)
 
     const { transform: bodyTransform } = data
     vec1.setValue(bodyTransform[0], bodyTransform[1], bodyTransform[2])
@@ -250,14 +257,47 @@ const tick = () => {
   timerId = self.setTimeout(tick, simSpeed)
 }
 
+const applyCentralImpulse = (id: number, x: number, y: number, z: number) => {
+  const body = bodies.get(id)!
+  vec1.setValue(x, y, z)
+  body.applyCentralImpulse(vec1)
+  body.activate()
+}
+
+const applyCentralImpulses = (ids: Uint16Array, impulses: Float32Array) => {
+  for (let i = 0, shift = 0, l = ids.length; i < l; i += 1, shift += 3) {
+    applyCentralImpulse(ids[i], impulses[shift + 0], impulses[shift + 1], impulses[shift + 2])
+  }
+}
+
+const applyCentralForce = (id: number, x: number, y: number, z: number) => {
+  const body = bodies.get(id)!
+  vec1.setValue(x, y, z)
+  body.applyCentralForce(vec1)
+  body.activate()
+}
+
+const applyCentralForces = (ids: Uint16Array, impulses: Float32Array) => {
+  for (let i = 0, shift = 0, l = ids.length; i < l; i += 1, shift += 3) {
+    applyCentralForce(ids[i], impulses[shift + 0], impulses[shift + 1], impulses[shift + 2])
+  }
+}
+
 export const api = {
   init,
   run,
   stop,
   setGravity,
+  setFriction,
+  setTransform,
+  setTransforms,
   setSimulationSpeed,
   createRigidBodies,
-  createTriggerVolumes,
+  createTriggers,
+  applyCentralImpulse,
+  applyCentralImpulses,
+  applyCentralForce,
+  applyCentralForces,
 }
 
 Comlink.expose(api)

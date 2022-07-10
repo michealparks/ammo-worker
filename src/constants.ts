@@ -1,8 +1,9 @@
 export const MAX_BODIES = 1000
 export const MAX_SUBSTEPS = 40
 export const FIXED_TIMESTEP = 1 / 60
-export const MAX_PLAYER_SPEED = 3
-export const GRAVITY = -20
+
+export const GRAVITY_DEFAULT = -9.8
+export const MARGIN_DEFAULT = 0.05
 
 // Rigid body has infinite mass and cannot move.
 export const BODYTYPE_STATIC = 0

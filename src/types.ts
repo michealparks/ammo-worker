@@ -1,5 +1,7 @@
 import * as constants from './constants'
 
+export type AmmoLib = typeof Ammo
+
 export type BodyShape = 
   | typeof constants.BODYSHAPE_BOX
   | typeof constants.BODYSHAPE_MESH
@@ -27,9 +29,34 @@ export interface RigidBody {
   angularDamping: number
   linkedId: number
   transform: Float32Array
-  geometry: Float32Array
   sprite: boolean
 }
+
+export interface BoxRigidBody extends RigidBody {
+  shape: typeof constants.BODYSHAPE_BOX
+  halfExtends: {
+    x: number,
+    y: number,
+    z: number
+  }
+}
+
+export interface MeshRigidBody extends RigidBody {
+  shape: typeof constants.BODYSHAPE_MESH
+  vertices: Float32Array
+  indexes?: Float32Array
+  matrix: number[]
+}
+
+export interface SphereRigidBody extends RigidBody {
+  shape: typeof constants.BODYSHAPE_SPHERE
+  radius: number
+}
+
+export type Body =
+  | BoxRigidBody
+  | MeshRigidBody
+  | SphereRigidBody
 
 export interface TriggerVolume {
   id: number
@@ -41,4 +68,14 @@ export interface TriggerVolume {
   linkedRigidbodyId?: number
   transform: Float32Array
   geometry: Float32Array
+}
+
+export interface Terrain {
+  width: number
+  depth: number
+  minHeight: number
+  maxHeight: number
+  widthExtents: number
+  depthExtents: number
+  heightData: number[]
 }

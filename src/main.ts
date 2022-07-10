@@ -21,6 +21,8 @@ const on = (eventName: string, callback: (data: Float32Array) => void) => {
   events.set(eventName, callback)
 }
 
+
+
 export const ammo = {
   ...constants,
   on,
@@ -28,5 +30,6 @@ export const ammo = {
   setSimulationSpeed: api.setSimulationSpeed,
   setGravity: api.setGravity,
   createRigidBodies: api.createRigidBodies,
+  applyCentralImpulses: api.applyCentralImpulses,
   run: api.run,
 }

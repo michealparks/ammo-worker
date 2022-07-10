@@ -1,25 +1,28 @@
 import * as THREE from 'three'
 import * as constants from './constants'
 import { scene } from './renderer'
+import { id } from './utils'
 import { ammo } from '../src/main'
-import { RigidBody } from '../src/types'
+import { Body } from '../src/types'
 
-let bodies: RigidBody[] = []
+export const bodies: Body[] = []
 
 const size = 1
+const halfExtends = size / 2
 const geometry = new THREE.BoxGeometry(size, size, size)
 const material = new THREE.MeshStandardMaterial()
+
 export const mesh = new THREE.InstancedMesh(geometry, material, constants.NUM_MESHES)
 mesh.castShadow = true
+mesh.receiveShadow = true
 scene.add(mesh)
 
 const color = new THREE.Color()
-const margin = 0.1
 
-for (let id = 0; id < constants.NUM_MESHES; id += 1) {
+for (let i = 0; i < constants.NUM_MESHES; i += 1) {
   bodies.push({
-    id,
-    name: `box_${id}`,
+    id: id(),
+    name: `box_${i}`,
     type: ammo.BODYTYPE_DYNAMIC,
     shape: ammo.BODYSHAPE_BOX,
     mass: 1,
@@ -28,8 +31,12 @@ for (let id = 0; id < constants.NUM_MESHES; id += 1) {
     linearDamping: 0.1,
     angularDamping: 0.1,
     linkedId: -1,
-    transform: new Float32Array([Math.random(), 1 + id, Math.random(), 0, 0, 0, 1]),
-    geometry: new Float32Array([size / 2 - margin, size / 2 - margin, size / 2 - margin]),
+    transform: new Float32Array([Math.random(), 1 + i, Math.random(), 0, 0, 0, 1]),
+    halfExtends: {
+      x: halfExtends,
+      y: halfExtends,
+      z: halfExtends,
+    },
     sprite: false,
   })
 
@@ -39,10 +46,8 @@ for (let id = 0; id < constants.NUM_MESHES; id += 1) {
     (85 + 10 * Math.random()) / 100
   )
 
-  mesh.setColorAt(id, color)
+  mesh.setColorAt(i, color)
 }
 
 mesh.instanceColor!.needsUpdate = true
 
-await ammo.init()
-await ammo.createRigidBodies(bodies)

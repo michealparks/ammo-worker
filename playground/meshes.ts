@@ -1,27 +1,34 @@
 import * as THREE from 'three'
 import * as constants from './constants'
 import { scene } from './renderer'
+import { id } from './utils'
 import { ammo } from '../src/main'
-import { RigidBody } from '../src/types'
+import { Body } from '../src/types'
 
-let bodies: RigidBody[] = []
+export const bodies: Body[] = []
 
-const radius = 1
+const m4 = new THREE.Matrix4()
+
+const radius = 0.5
 const geometry = new THREE.DodecahedronGeometry(radius)
 const material = new THREE.MeshStandardMaterial()
+
 export const mesh = new THREE.InstancedMesh(geometry, material, constants.NUM_MESHES)
+mesh.castShadow = true
+mesh.receiveShadow = true
+
 scene.add(mesh)
 
-console.log(geometry)
+m4.copy(mesh.matrixWorld).invert()
 
 const color = new THREE.Color()
 
-const vertices = new Float32Array(geometry.attributes.position.array)
+console.log(geometry.attributes.position.array)
 
-for (let id = 0; id < constants.NUM_MESHES; id += 1) {
+for (let i = 0; i < constants.NUM_MESHES; i += 1) {
   bodies.push({
-    id,
-    name: `mesh_${id}`,
+    id: id(),
+    name: `mesh_${i}`,
     type: ammo.BODYTYPE_DYNAMIC,
     shape: ammo.BODYSHAPE_MESH,
     mass: 1,
@@ -30,12 +37,12 @@ for (let id = 0; id < constants.NUM_MESHES; id += 1) {
     linearDamping: 0.1,
     angularDamping: 0.1,
     linkedId: -1,
-    transform: new Float32Array([Math.random(), 20 + id, Math.random(), 0, 0, 0, 1]),
-    geometry: vertices,
+    transform: new Float32Array([Math.random(), 20 + i, Math.random(), 0, 0, 0, 1]),
+    vertices: new Float32Array(geometry.attributes.position.array),
+    indexes: mesh.geometry.index ? new Float32Array(mesh.geometry.index.array) : undefined,
+    matrix: m4.elements,
     sprite: false,
   })
-
-  console.log(vertices)
 
   color.setHSL(
     Math.random(),
@@ -43,10 +50,9 @@ for (let id = 0; id < constants.NUM_MESHES; id += 1) {
     (85 + 10 * Math.random()) / 100
   )
 
-  mesh.setColorAt(id, color)
+  mesh.setColorAt(i, color)
 }
 
 mesh.instanceColor!.needsUpdate = true
 
-await ammo.init()
-await ammo.createRigidBodies(bodies)
+
