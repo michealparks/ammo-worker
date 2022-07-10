@@ -1,0 +1,29 @@
+{
+  "name": "ammo-worker",
+  "private": false,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "postinstall": "npm run build-ammo",
+    "start": "vite --host",
+    "build": "vite build",
+    "build-ammo": "rollup -c ./scripts/rollup.config.js --environment PROD",
+    "preview": "vite preview",
+    "check": "tsc"
+  },
+  "dependencies": {
+    "@rollup/plugin-alias": "^3.1.9",
+    "@rollup/plugin-replace": "^4.0.0",
+    "@types/ammo.js": "github:osman-turan/ammo.js-typings",
+    "@types/three": "^0.141.0",
+    "ammo.js": "github:kripken/ammo.js",
+    "comlink": "^4.3.1",
+    "rollup": "^2.76.0",
+    "rollup-plugin-copy": "^3.4.0",
+    "rollup-plugin-filesize": "^9.1.2",
+    "rollup-plugin-terser": "^7.0.2",
+    "three": "^0.142.0",
+    "typescript": "^4.7.4",
+    "vite": "^2.9.14"
+  }
+}
