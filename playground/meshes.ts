@@ -10,7 +10,7 @@ export const bodies: Body[] = []
 const m4 = new THREE.Matrix4()
 
 const radius = 0.5
-const geometry = new THREE.DodecahedronGeometry(radius)
+const geometry = new THREE.CapsuleGeometry(radius, radius, 4, 8)
 const material = new THREE.MeshStandardMaterial()
 
 export const mesh = new THREE.InstancedMesh(geometry, material, constants.NUM_MESHES)
@@ -23,15 +23,12 @@ m4.copy(mesh.matrixWorld).invert()
 
 const color = new THREE.Color()
 
-console.log(geometry.attributes.position.array)
-
 for (let i = 0; i < constants.NUM_MESHES; i += 1) {
   bodies.push({
     id: id(),
     name: `mesh_${i}`,
     type: ammo.BODYTYPE_DYNAMIC,
     shape: ammo.BODYSHAPE_MESH,
-    mass: 1,
     restitution: 0.5,
     friction: 0.5,
     linearDamping: 0.1,

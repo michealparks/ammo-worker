@@ -62,8 +62,6 @@ const createMeshShape = (ammo: AmmoLib, body: MeshRigidBody) => {
 
   m4.fromArray(matrix)
 
-  console.log(vertices, matrix)
-
   if (indexes !== undefined) {
     for (let i = 0, l = indexes.length; i < l; i += 3) {
       const ai = indexes[i + 0] * 3

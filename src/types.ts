@@ -22,14 +22,14 @@ export interface RigidBody {
   name: string
   type: BodyType
   shape: BodyShape
-  mass: number
-  restitution: number
-  friction: number
-  linearDamping: number
-  angularDamping: number
-  linkedId: number
+  mass?: number
+  restitution?: number
+  friction?: number
+  linearDamping?: number
+  angularDamping?: number
+  linkedId?: number
   transform: Float32Array
-  sprite: boolean
+  sprite?: boolean
 }
 
 export interface BoxRigidBody extends RigidBody {

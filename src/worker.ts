@@ -2,14 +2,12 @@ import AmmoLib from './ammo'
 import * as Comlink from 'comlink'
 import * as constants from './constants'
 import type { Flag, Body, TriggerVolume } from './types'
-import {
-  createShape
-} from './lib'
+import { createBody } from './lib/create-body'
+import { createTrigger } from './lib/create-trigger'
+import { checkForCollisions, cleanOldCollisions } from './lib/collisions'
 
 let ammo: typeof Ammo
-let vec1: Ammo.btVector3
-let vec2: Ammo.btVector3
-let vec3: Ammo.btVector3
+let vec: Ammo.btVector3
 let quat: Ammo.btQuaternion
 let transform: Ammo.btTransform
 let world: Ammo.btDiscreteDynamicsWorld
@@ -24,9 +22,7 @@ const dynamicBodies = new Set<Ammo.btRigidBody>()
 
 const init = async () => {
   ammo = await AmmoLib()
-  vec1 = new ammo.btVector3()
-  vec2 = new ammo.btVector3()
-  vec3 = new ammo.btVector3()
+  vec = new ammo.btVector3()
   quat = new ammo.btQuaternion(0, 0, 0, 0)
   transform = new ammo.btTransform()
 
@@ -49,8 +45,8 @@ const setSimulationSpeed = (speed: number) => {
 }
 
 const setGravity = (x: number, y: number, z: number) => {
-  vec1.setValue(x, y, z)
-  world.setGravity(vec1)
+  vec.setValue(x, y, z)
+  world.setGravity(vec)
 }
 
 const setFriction = (id: number, friction: number) => {
@@ -62,13 +58,13 @@ const setFriction = (id: number, friction: number) => {
 const setTransform = (id: number, bodyTransform: Float32Array, shift = 0) => {
   const body = bodies.get(id)!
 
-  vec1.setValue(0, 0, 0)
-  body.setAngularVelocity(vec1);
-	body.setLinearVelocity(vec1);
+  vec.setValue(0, 0, 0)
+  body.setAngularVelocity(vec);
+	body.setLinearVelocity(vec);
 
-  vec1.setValue(bodyTransform[shift + 0], bodyTransform[shift + 1], bodyTransform[shift + 2])
+  vec.setValue(bodyTransform[shift + 0], bodyTransform[shift + 1], bodyTransform[shift + 2])
   quat.setValue(bodyTransform[shift + 3], bodyTransform[shift + 4], bodyTransform[shift + 5], bodyTransform[shift + 6])
-  transform.setOrigin(vec1)
+  transform.setOrigin(vec)
   transform.setRotation(quat)
   body.setWorldTransform(transform)
 
@@ -85,51 +81,6 @@ const setTransforms = (ids: Uint16Array, transforms: Float32Array) => {
   }
 }
 
-const createBody = (data: Body, inertia: boolean, flag?: Flag) => {
-  const { transform: bodyTransform } = data
-
-  let localInertia: Ammo.btVector3 | undefined
-
-  const shape = createShape(ammo, data)
-  shape.setMargin(constants.MARGIN_DEFAULT)
-
-  if (inertia) {
-    localInertia = new ammo.btVector3(0, 0, 0)
-    shape.calculateLocalInertia(data.mass, localInertia)
-  }
-
-  vec1.setValue(bodyTransform[0], bodyTransform[1], bodyTransform[2])
-  quat.setValue(bodyTransform[3], bodyTransform[4], bodyTransform[5], bodyTransform[6])
-  transform.setOrigin(vec1)
-  transform.setRotation(quat)
-
-  const motionState = new ammo.btDefaultMotionState(transform)
-  const bodyInfo = new ammo.btRigidBodyConstructionInfo(data.mass, motionState, shape, localInertia)
-  const rigidbody = new ammo.btRigidBody(bodyInfo)
-
-  rigidbody.type = data.type
-  rigidbody.trigger = false
-  rigidbody.id = data.id
-  rigidbody.name = data.name
-  rigidbody.linkedId = data.linkedId
-
-  rigidbody.setRestitution(data.restitution)
-  rigidbody.setFriction(data.friction)
-  rigidbody.setDamping(data.linearDamping, data.angularDamping)
-
-  if (flag !== undefined) {
-    rigidbody.setCollisionFlags(rigidbody.getCollisionFlags() | flag)
-  }
-
-  ammo.destroy(bodyInfo)
-  
-  if (localInertia !== undefined) {
-    ammo.destroy(localInertia)
-  }
-
-  return rigidbody
-}
-
 const createRigidBodies = (objects: Body[]) => {
   let flag: Flag | undefined
   let body: Ammo.btRigidBody
@@ -140,20 +91,20 @@ const createRigidBodies = (objects: Body[]) => {
     case constants.BODYTYPE_STATIC: 
       inertia = false
       flag = constants.BODYFLAG_STATIC_OBJECT
-      body = createBody(data, inertia, flag),
+      body = createBody(ammo, data, inertia, flag),
       world.addRigidBody(body, constants.BODYGROUP_STATIC, constants.BODYMASK_NOT_STATIC)
       break
     case constants.BODYTYPE_DYNAMIC:
-      inertia = data.sprite === false && data.mass !== 0
+      inertia = true //  data.sprite === false && data.mass !== 0
       flag = undefined
-      body = createBody(data, inertia, flag)
+      body = createBody(ammo, data, inertia, flag)
       dynamicBodies.add(body)
       world.addRigidBody(body, constants.BODYGROUP_DYNAMIC, constants.BODYMASK_ALL)
       break
     case constants.BODYTYPE_KINEMATIC:
       inertia = false
       flag = constants.BODYFLAG_KINEMATIC_OBJECT
-      body = createBody(data, inertia, flag)
+      body = createBody(ammo, data, inertia, flag)
       body.setActivationState(constants.BODYSTATE_DISABLE_DEACTIVATION)
       world.addRigidBody(body)
       break
@@ -164,45 +115,10 @@ const createRigidBodies = (objects: Body[]) => {
 }
 
 const createTriggers = (objects: TriggerVolume[]) => {
-  const group = constants.BODYGROUP_STATIC
-  const mask = constants.BODYMASK_NOT_STATIC
-
   for (const data of objects) {
-    const shape = createShape(ammo, data)
-    shape.setMargin(constants.MARGIN_DEFAULT)
-
-    const { transform: bodyTransform } = data
-    vec1.setValue(bodyTransform[0], bodyTransform[1], bodyTransform[2])
-    quat.setValue(bodyTransform[3], bodyTransform[4], bodyTransform[5], bodyTransform[6])
-    transform.setOrigin(vec1)
-    transform.setRotation(quat)
-
-    const motionState = new ammo.btDefaultMotionState(transform)
-    const bodyInfo = new ammo.btRigidBodyConstructionInfo(1, motionState, shape)
-    const trigger = new ammo.btRigidBody(bodyInfo)
-
-    trigger.type = constants.BODYTYPE_STATIC
-    trigger.trigger = true
-    trigger.id = object.id
-    trigger.name = object.name
-    trigger.enter = object.enter
-    trigger.leave = object.leave
-    trigger.entity = object.entity
-    trigger.linkedId = object.linkedId
-
-    trigger.setRestitution(0)
-    trigger.setFriction(0)
-    trigger.setDamping(0, 0)
-
-    vec1.setValue(0, 0, 0)
-    trigger.setLinearFactor(vec1)
-    trigger.setAngularFactor(vec1)
-    trigger.setCollisionFlags(trigger.getCollisionFlags() | constants.BODYFLAG_NORESPONSE_OBJECT)
-
-    ammo.destroy(bodyInfo)
-    
+    const trigger = createTrigger(ammo, data)
     bodies.set(data.id, trigger)
-    world.addRigidBody(trigger, group, mask)
+    world.addRigidBody(trigger, constants.BODYGROUP_STATIC, constants.BODYMASK_NOT_STATIC)
   }
 }
 
@@ -252,15 +168,23 @@ const tick = () => {
     index += 1
   }
 
-  postMessage(transforms)
+  const globalEvents: any[] = []
+  checkForCollisions(ammo, world, globalEvents)
+  const data = cleanOldCollisions(globalEvents)
+
+  postMessage({
+    ...data,
+    transforms,
+    globalEvents
+  })
 
   timerId = self.setTimeout(tick, simSpeed)
 }
 
 const applyCentralImpulse = (id: number, x: number, y: number, z: number) => {
   const body = bodies.get(id)!
-  vec1.setValue(x, y, z)
-  body.applyCentralImpulse(vec1)
+  vec.setValue(x, y, z)
+  body.applyCentralImpulse(vec)
   body.activate()
 }
 
@@ -272,8 +196,8 @@ const applyCentralImpulses = (ids: Uint16Array, impulses: Float32Array) => {
 
 const applyCentralForce = (id: number, x: number, y: number, z: number) => {
   const body = bodies.get(id)!
-  vec1.setValue(x, y, z)
-  body.applyCentralForce(vec1)
+  vec.setValue(x, y, z)
+  body.applyCentralForce(vec)
   body.activate()
 }
 

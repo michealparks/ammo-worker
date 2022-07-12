@@ -25,7 +25,6 @@ for (let i = 0; i < constants.NUM_MESHES; i += 1) {
     name: `box_${i}`,
     type: ammo.BODYTYPE_DYNAMIC,
     shape: ammo.BODYSHAPE_BOX,
-    mass: 1,
     restitution: 0.5,
     friction: 0.5,
     linearDamping: 0.1,

@@ -14,14 +14,20 @@ worker.onmessage = ({ data }) => {
     return
   }
 
-  events.get('tick')?.(data)
+  if (events.has('tick') === false) return
+
+  for (const callback of events.get('tick')) {
+    callback(data)
+  }
 }
 
-const on = (eventName: string, callback: (data: Float32Array) => void) => {
-  events.set(eventName, callback)
+const on = (eventName: string, callback: (data: any) => void) => {
+  if (events.has(eventName) === false) {
+    events.set(eventName, new Set())
+  }
+
+  events.get(eventName).add(callback)
 }
-
-
 
 export const ammo = {
   ...constants,
