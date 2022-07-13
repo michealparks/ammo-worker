@@ -1,9 +1,10 @@
 import * as THREE from 'three'
-import * as constants from './constants'
-import { scene } from './renderer'
-import { id } from './utils'
-import { ammo } from '../src/main'
-import { Body } from '../src/types'
+import * as constants from '../constants'
+import { scene } from '../renderer'
+import { id } from '../utils'
+import { ammo } from '../../src/main'
+import { Body } from '../../src/types'
+import { randomColor } from '../lib/colors'
 
 export const bodies: Body[] = []
 
@@ -41,11 +42,7 @@ for (let i = 0; i < constants.NUM_MESHES; i += 1) {
     sprite: false,
   })
 
-  color.setHSL(
-    Math.random(),
-    (25 + 70 * Math.random()) / 100,
-    (85 + 10 * Math.random()) / 100
-  )
+  color.set(randomColor())
 
   mesh.setColorAt(i, color)
 }

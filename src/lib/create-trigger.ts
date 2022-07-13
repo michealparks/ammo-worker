@@ -1,7 +1,7 @@
 import { MARGIN_DEFAULT, BODYFLAG_NORESPONSE_OBJECT } from '../constants'
 import { AmmoLib, Body } from '../types'
 import { createShape } from './create-shape'
-
+import * as constants from '../constants'
 
 export const createTrigger = (ammo: AmmoLib, data: Body) => {
   const shape = createShape(ammo, data)
@@ -24,12 +24,12 @@ export const createTrigger = (ammo: AmmoLib, data: Body) => {
 
   trigger.type = constants.BODYTYPE_STATIC
   trigger.trigger = true
-  trigger.id = object.id
-  trigger.name = object.name
-  trigger.enter = object.enter
-  trigger.leave = object.leave
-  trigger.entity = object.entity
-  trigger.linkedId = object.linkedId
+  trigger.id = data.id
+  trigger.name = data.name
+  trigger.enter = data.enter
+  trigger.leave = data.leave
+  trigger.entity = data.entity
+  trigger.linkedId = data.linkedId
 
   trigger.setRestitution(0)
   trigger.setFriction(0)

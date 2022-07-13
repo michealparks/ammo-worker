@@ -22,13 +22,13 @@ ammo.on('tick', ({ collisionStart }) => {
 
 </script>
 
-<div class='absolute bottom-0 left-0 m-2 bg-white px-3 py-1 max-h-[30%] w-[30%] overflow-y-auto'>
+<div class='absolute bottom-0 left-0 m-3 bg-white px-3 py-2 max-h-[30%] w-[20%] overflow-y-auto rounded shadow-lg'>
   {#each collisions as [id, others]}
-    <div>
+    <p class='m-0 text-xs'>
       id: {id}, others:
       {#each others as other}
         {other}, 
       {/each}
-    </div>
+    </p>
   {/each}
 </div>

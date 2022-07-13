@@ -6,6 +6,7 @@ export type BodyShape =
   | typeof constants.BODYSHAPE_BOX
   | typeof constants.BODYSHAPE_MESH
   | typeof constants.BODYSHAPE_SPHERE
+  | typeof constants.BODYSHAPE_CAPSULE
 
 export type BodyType = 
   | typeof constants.BODYTYPE_DYNAMIC
@@ -34,11 +35,21 @@ export interface RigidBody {
 
 export interface BoxRigidBody extends RigidBody {
   shape: typeof constants.BODYSHAPE_BOX
-  halfExtends: {
-    x: number,
-    y: number,
+  halfExtents: {
+    x: number
+    y: number
     z: number
   }
+}
+
+export interface CapsuleRigidBody extends RigidBody {
+  shape: typeof constants.BODYSHAPE_CAPSULE
+  halfExtents: {
+    x: number
+    y: number
+    z: number
+  }
+  cylinderAxis: 'x' | 'y' | 'z'
 }
 
 export interface MeshRigidBody extends RigidBody {
@@ -57,6 +68,7 @@ export type Body =
   | BoxRigidBody
   | MeshRigidBody
   | SphereRigidBody
+  | CapsuleRigidBody
 
 export interface TriggerVolume {
   id: number
@@ -67,8 +79,18 @@ export interface TriggerVolume {
   entity: string
   linkedRigidbodyId?: number
   transform: Float32Array
-  geometry: Float32Array
 }
+
+export interface BoxTriggerVolume extends TriggerVolume {
+  halfExtents: {
+    x: number
+    y: number
+    z: number
+  }
+}
+
+export type Volume =
+  | BoxTriggerVolume
 
 export interface Terrain {
   width: number

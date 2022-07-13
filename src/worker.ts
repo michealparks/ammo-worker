@@ -141,6 +141,7 @@ const tick = () => {
 
   world.stepSimulation(dt, constants.MAX_SUBSTEPS, constants.FIXED_TIMESTEP)
 
+  
   let index = 0
   let shift = 0
 
@@ -174,6 +175,7 @@ const tick = () => {
 
   postMessage({
     ...data,
+    dt: 1000 / (dt * 1000),
     transforms,
     globalEvents
   })

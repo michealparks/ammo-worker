@@ -35,7 +35,9 @@ export const ammo = {
   init: api.init,
   setSimulationSpeed: api.setSimulationSpeed,
   setGravity: api.setGravity,
+  setTransforms: api.setTransforms,
   createRigidBodies: api.createRigidBodies,
+  createTriggers: api.createTriggers,
   applyCentralImpulses: api.applyCentralImpulses,
   run: api.run,
 }

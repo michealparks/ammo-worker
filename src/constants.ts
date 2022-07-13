@@ -16,8 +16,15 @@ export const BODYTYPE_KINEMATIC = 2
 
 // Collision shapes
 export const BODYSHAPE_BOX = 0
-export const BODYSHAPE_MESH = 2
-export const BODYSHAPE_SPHERE = 1
+export const BODYSHAPE_CYLINDER = 1
+export const BODYSHAPE_SPHERE = 2
+export const BODYSHAPE_CAPSULE = 3
+export const BODYSHAPE_CONE = 4
+export const BODYSHAPE_HULL = 5
+export const BODYSHAPE_HACD = 6 // Hierarchical Approximate Convex Decomposition
+export const BODYSHAPE_VHACD = 7 // Volumetric Hierarchical Approximate Convex Decomposition
+export const BODYSHAPE_HEIGHTFIELD = 8
+export const BODYSHAPE_MESH = 9
 
 // Collision flags
 export const BODYFLAG_KINEMATIC_OBJECT = 2

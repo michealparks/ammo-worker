@@ -1,50 +1,30 @@
 import { Matrix4, Vector3 } from 'three'
-
-import {
-  BODYSHAPE_BOX,
-  BODYSHAPE_MESH,
-  BODYSHAPE_SPHERE,
-} from '../constants'
-
-import type {
-  AmmoLib,
-  RigidBody,
-  BoxRigidBody,
-  MeshRigidBody,
-  SphereRigidBody
-} from '../types'
+import * as constants from '../constants'
+import * as types from '../types'
 
 const m4 = new Matrix4()
 const v1 = new Vector3()
 const v2 = new Vector3()
 const v3 = new Vector3()
 
-export const createShape = (ammo: AmmoLib, body: RigidBody) => {
-  
-  if (body.shape === BODYSHAPE_BOX) {
-
-    return createBoxShape(ammo, body as BoxRigidBody)
-
-  } else if (body.shape === BODYSHAPE_MESH) {
-
-    return createMeshShape(ammo, body as MeshRigidBody)
-
-  } else if (body.shape === BODYSHAPE_SPHERE) {
-
-    return new ammo.btSphereShape((body as SphereRigidBody).radius)
-
-  } else {
-
-    throw new Error('Invalid shape.')
-
+export const createShape = (ammo: types.AmmoLib, body: types.RigidBody) => {
+  switch (body.shape) {
+    case constants.BODYSHAPE_BOX:
+      return createBoxShape(ammo, body as types.BoxRigidBody)
+    case constants.BODYSHAPE_CAPSULE:
+      return createCapsuleShape(ammo, body as types.CapsuleRigidBody)
+    case constants.BODYSHAPE_SPHERE:
+      return new ammo.btSphereShape((body as types.SphereRigidBody).radius)
+    case constants.BODYSHAPE_MESH:
+      return createMeshShape(ammo, body as types.MeshRigidBody)
   }
 }
 
-const createBoxShape = (ammo: AmmoLib, body: BoxRigidBody) => {
-  const { halfExtends } = body
+const createBoxShape = (ammo: types.AmmoLib, body: types.BoxRigidBody) => {
+  const { halfExtents } = body
   const vec = new ammo.btVector3()
 
-  vec.setValue(halfExtends.x, halfExtends.y, halfExtends.z)
+  vec.setValue(halfExtents.x, halfExtents.y, halfExtents.z)
   const shape = new ammo.btBoxShape(vec)
 
   ammo.destroy(vec)
@@ -52,7 +32,20 @@ const createBoxShape = (ammo: AmmoLib, body: BoxRigidBody) => {
   return shape
 }
 
-const createMeshShape = (ammo: AmmoLib, body: MeshRigidBody) => {
+const createCapsuleShape = (ammo: types.AmmoLib, body: types.CapsuleRigidBody) => {
+  const { x, y, z } = body.halfExtents;
+
+  switch (body.cylinderAxis) {
+    case 'y':
+      return new ammo.btCapsuleShape(Math.max(x, z), y * 2);
+    case 'x':
+      return new ammo.btCapsuleShapeX(Math.max(y, z), x * 2);
+    case 'z':
+      return new ammo.btCapsuleShapeZ(Math.max(x, y), z * 2);
+  }
+}
+
+const createMeshShape = (ammo: types.AmmoLib, body: types.MeshRigidBody) => {
   const { vertices, indexes, matrix } = body
 
   const vec1 = new ammo.btVector3()
