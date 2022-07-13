@@ -3,7 +3,7 @@ import App from './App.svelte'
 import * as THREE from 'three'
 import { ammo } from '../src/main'
 import { scene, animate } from './renderer'
-import { mesh, bodies } from './shapes/boxes'
+import { mesh, bodies } from './shapes/capsules'
 import * as constants from './constants'
 import { Volume } from '../src/types'
 
@@ -100,13 +100,6 @@ const triggers: Volume[] = [
   }
 ]
 
-await ammo.init()
-await ammo.createRigidBodies(bodies)
-await ammo.createTriggers(triggers)
-await ammo.run()
-
-animate()
-
 const M = 20
 
 document.addEventListener('keydown', (event) => {
@@ -123,6 +116,17 @@ document.addEventListener('keydown', (event) => {
 
   ammo.applyCentralImpulses(ids, impulses)
 })
+
+const main = async () => {
+  await ammo.init()
+  await ammo.createRigidBodies(bodies)
+  await ammo.createTriggers(triggers)
+  await ammo.run()
+
+  animate()
+}
+
+main()
 
 export default new App({
   target: document.querySelector('#app')

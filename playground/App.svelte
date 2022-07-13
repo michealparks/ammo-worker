@@ -32,3 +32,7 @@ ammo.on('tick', ({ collisionStart }) => {
     </p>
   {/each}
 </div>
+
+<div class='absolute bottom-0 right-0 m-3 bg-white rounded shadow-lg px-3 py-2 text-xs'>
+  Press "i" to give random impulses
+</div>
