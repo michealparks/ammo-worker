@@ -20,8 +20,19 @@ let simSpeed = 1000 / 60
 const bodies = new Map<number, Ammo.btRigidBody>()
 const dynamicBodies = new Set<Ammo.btRigidBody>()
 
+const initializeWasm = () => {
+  return AmmoLib.bind(undefined, {
+    locateFile() {
+      return import.meta.env.DEV
+        ? '/src/ammo.wasm.wasm'
+        : '/ammo-worker/ammo.wasm.wasm'
+    }
+  });
+}
+
 const init = async () => {
-  ammo = await AmmoLib()
+  const AmmoModule = initializeWasm()
+  ammo = await AmmoModule()
   vec = new ammo.btVector3()
   quat = new ammo.btQuaternion(0, 0, 0, 0)
   transform = new ammo.btTransform()
