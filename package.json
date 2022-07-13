@@ -6,7 +6,7 @@
   "scripts": {
     "postinstall": "npm run build-ammo",
     "start": "vite --host",
-    "build": "vite build",
+    "build": "vite build --base=/ammo-worker",
     "build-ammo": "rollup -c ./scripts/rollup.config.js --environment PROD",
     "preview": "vite preview",
     "check": "tsc",
