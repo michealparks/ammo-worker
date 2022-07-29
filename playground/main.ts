@@ -118,7 +118,11 @@ document.addEventListener('keydown', (event) => {
 })
 
 const main = async () => {
-  await ammo.init()
+  await ammo.init({
+    wasmPath: import.meta.env.DEV
+      ? '/src/ammo.wasm.wasm'
+      : '/ammo-worker/ammo.wasm.wasm'
+  })
   await ammo.createRigidBodies(bodies)
   await ammo.createTriggers(triggers)
   await ammo.run()
