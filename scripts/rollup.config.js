@@ -1,9 +1,7 @@
 import alias from '@rollup/plugin-alias'
 import replace from '@rollup/plugin-replace'
 import copy from 'rollup-plugin-copy'
-import { terser } from 'rollup-plugin-terser'
 import filesize from 'rollup-plugin-filesize'
-import terserConfig from './terser'
 
 const { DEV, PROD } = process.env
 
@@ -34,7 +32,6 @@ export default {
         }
       ]
     }),
-    PROD && terser(terserConfig),
     PROD && filesize()
   ]
 }
