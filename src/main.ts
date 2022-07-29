@@ -1,10 +1,10 @@
 
 import * as Comlink from 'comlink'
-import AmmoWorker from './worker?worker'
 import type { api as API } from './worker'
 import * as constants from './constants'
 
-const worker = new AmmoWorker()
+const worker = new Worker(new URL('./worker.ts', import.meta.url), { type: 'module' })
+
 const api = Comlink.wrap<typeof API>(worker)
 
 const events = new Map()
