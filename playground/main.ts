@@ -1,11 +1,18 @@
 import './index.css'
 import App from './App.svelte'
 import * as THREE from 'three'
-import { ammo } from '../src/main'
+import { createAmmo } from '../src/main'
 import { scene, animate } from './renderer'
 import { mesh, bodies } from './shapes/capsules'
 import * as constants from './constants'
 import { Volume } from '../src/types'
+
+const ammo = await createAmmo({
+  workerPath: './worker.ts',
+  wasmPath: import.meta.env.DEV
+    ? '/src/ammo.wasm.wasm'
+    : '/ammo-worker/ammo.wasm.wasm'
+})
 
 const quaternion = new THREE.Quaternion()
 const matrix = new THREE.Matrix4()
@@ -118,11 +125,6 @@ document.addEventListener('keydown', (event) => {
 })
 
 const main = async () => {
-  await ammo.init({
-    wasmPath: import.meta.env.DEV
-      ? '/src/ammo.wasm.wasm'
-      : '/ammo-worker/ammo.wasm.wasm'
-  })
   await ammo.createRigidBodies(bodies)
   await ammo.createTriggers(triggers)
   await ammo.run()
