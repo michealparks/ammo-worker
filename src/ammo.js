@@ -1,4 +1,4 @@
-const exports={};
+const module = { exports: {} };
 // This is ammo.js, a port of Bullet Physics to JavaScript. zlib licensed.
 
 var Ammo = (() => {
@@ -901,7 +901,7 @@ xF.prototype.CreateEllipsoid=function(a,c,d,e){var g=this.bB;a&&"object"===typeo
 xF.prototype.CreateFromTriMesh=function(a,c,d,e,g){var n=this.bB;DD();a&&"object"===typeof a&&(a=a.bB);"object"==typeof c&&(c=HD(c));if("object"==typeof d&&"object"===typeof d){var D=ED(d,xa);FD(d,xa,D);d=D;}e&&"object"===typeof e&&(e=e.bB);g&&"object"===typeof g&&(g=g.bB);return k(fD(n,a,c,d,e,g),Y)};
 xF.prototype.CreateFromConvexHull=function(a,c,d,e){var g=this.bB;a&&"object"===typeof a&&(a=a.bB);c&&"object"===typeof c&&(c=c.bB);d&&"object"===typeof d&&(d=d.bB);e&&"object"===typeof e&&(e=e.bB);return k(gD(g,a,c,d,e),Y)};xF.prototype.__destroy__=function(){hD(this.bB);};
 (function(){function a(){b.PHY_FLOAT=iD();b.PHY_DOUBLE=jD();b.PHY_INTEGER=kD();b.PHY_SHORT=lD();b.PHY_FIXEDPOINT88=mD();b.PHY_UCHAR=nD();b.CONST_GIMPACT_COMPOUND_SHAPE=oD();b.CONST_GIMPACT_TRIMESH_SHAPE_PART=pD();b.CONST_GIMPACT_TRIMESH_SHAPE=qD();b.BT_CONSTRAINT_ERP=rD();b.BT_CONSTRAINT_STOP_ERP=sD();b.BT_CONSTRAINT_CFM=tD();b.BT_CONSTRAINT_STOP_CFM=uD();}Fa?a():Ca.unshift(a);})();b.CONTACT_ADDED_CALLBACK_SIGNATURE="iiiiiiii";b.CONTACT_DESTROYED_CALLBACK_SIGNATURE="ii";
-b.CONTACT_PROCESSED_CALLBACK_SIGNATURE="iiii";b.INTERNAL_TICK_CALLBACK_SIGNATURE="vif";exports.Ammo=b;
+b.CONTACT_PROCESSED_CALLBACK_SIGNATURE="iiii";b.INTERNAL_TICK_CALLBACK_SIGNATURE="vif";module.exports.Ammo=b;
 
 
   return Ammo.ready
@@ -914,4 +914,4 @@ else if (typeof define === 'function' && define['amd'])
   define([], function() { return Ammo; });
 else if (typeof exports === 'object')
   exports["Ammo"] = Ammo;
-export default exports.Ammo;
+export default Ammo;

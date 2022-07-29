@@ -11,12 +11,12 @@ export default {
   output: [{
     file: 'src/ammo.js',
     format: 'es',
-    banner: 'const exports={};',
-    footer: 'export default exports.Ammo;'
+    banner: 'const module = { exports: {} };',
+    footer: 'export default Ammo;'
   }],
   plugins: [
     replace({
-      'this.Ammo': 'exports.Ammo'
+      'this.Ammo': 'module.exports.Ammo'
     }),
     alias({
       entries: {
