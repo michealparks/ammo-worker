@@ -52,9 +52,5 @@ export const gatherGeometries = (root: THREE.Object3D, options: {
     }
   })
 
-  if (indexes.every(index => index === null)) {
-    indexes = undefined
-  }
-
   return { geometries, matrices, indexes }
 }
