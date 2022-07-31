@@ -3,6 +3,8 @@ import * as Comlink from 'comlink'
 import type { api as API } from './worker'
 import * as constants from './constants'
 
+export { computeShape } from './lib/compute-shape'
+
 const events = new Map()
 
 const on = (eventName: string, callback: (data: any) => void) => {
