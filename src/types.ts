@@ -1,12 +1,22 @@
 import * as constants from './constants'
 
-export type AmmoLib = typeof Ammo
+export type AmmoLib = typeof Ammo & {
+  _malloc(n: number): number
+  _free(address: number): void
+  HEAPF32: number[]
+  PHY_SHORT: number
+  PHY_FLOAT: number
+}
 
 export type BodyShape = 
   | typeof constants.BODYSHAPE_BOX
+  | typeof constants.BODYSHAPE_CAPSULE
+  | typeof constants.BODYSHAPE_CONE
+  | typeof constants.BODYSHAPE_CYLINDER
+  | typeof constants.BODYSHAPE_HEIGHTFIELD
+  // | typeof constants.BODYSHAPE_HULL
   | typeof constants.BODYSHAPE_MESH
   | typeof constants.BODYSHAPE_SPHERE
-  | typeof constants.BODYSHAPE_CAPSULE
 
 export type BodyType = 
   | typeof constants.BODYTYPE_DYNAMIC
@@ -14,9 +24,16 @@ export type BodyType =
   | typeof constants.BODYTYPE_STATIC
 
 export type Flag =
-  | typeof constants.BODYFLAG_STATIC_OBJECT
-  | typeof constants.BODYFLAG_NORESPONSE_OBJECT
   | typeof constants.BODYFLAG_KINEMATIC_OBJECT
+  | typeof constants.BODYFLAG_NORESPONSE_OBJECT
+  | typeof constants.BODYFLAG_STATIC_OBJECT
+
+export type Axis = 'x' | 'y' | 'z'
+export interface Vector3 {
+  x: number
+  y: number
+  z: number
+}
 
 export interface RigidBody {
   id: number
@@ -31,25 +48,45 @@ export interface RigidBody {
   linkedId?: number
   transform: Float32Array
   sprite?: boolean
+  margin?: number
+  scale?: Vector3
 }
 
-export interface BoxRigidBody extends RigidBody {
+export interface BoxLikeRigidBody extends RigidBody {
+  halfExtents: Vector3
+  minHalfExtent?: number
+  maxHalfExtent?: number
+}
+
+export interface BoxRigidBody extends BoxLikeRigidBody {
   shape: typeof constants.BODYSHAPE_BOX
-  halfExtents: {
-    x: number
-    y: number
-    z: number
-  }
 }
 
-export interface CapsuleRigidBody extends RigidBody {
+export interface CapsuleRigidBody extends BoxLikeRigidBody {
   shape: typeof constants.BODYSHAPE_CAPSULE
-  halfExtents: {
-    x: number
-    y: number
-    z: number
-  }
-  cylinderAxis: 'x' | 'y' | 'z'
+  cylinderAxis: Axis
+}
+
+export interface ConeRigidBody extends BoxLikeRigidBody {
+  shape: typeof constants.BODYSHAPE_CONE
+  cylinderAxis: Axis
+}
+
+export interface CylinderRigidBody extends BoxLikeRigidBody {
+  shape: typeof constants.BODYSHAPE_CYLINDER
+  cylinderAxis: Axis
+}
+
+export interface HeightfieldTerrainRigidBody extends RigidBody {
+  shape: typeof constants.BODYSHAPE_HEIGHTFIELD
+  heightStickWidth: number
+  heightStickLength: number
+  data: Float32Array[]
+  heightScale?: number
+  upAxis?: 0 | 1 | 2
+  heightDataType?: 'short' | 'float'
+  heightfieldDistance?: number
+  flipQuadEdges?: boolean
 }
 
 export interface MeshRigidBody extends RigidBody {
@@ -82,11 +119,7 @@ export interface TriggerVolume {
 }
 
 export interface BoxTriggerVolume extends TriggerVolume {
-  halfExtents: {
-    x: number
-    y: number
-    z: number
-  }
+  halfExtents: Vector3
 }
 
 export type Volume =

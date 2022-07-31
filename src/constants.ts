@@ -5,30 +5,28 @@ export const FIXED_TIMESTEP = 1 / 60
 export const GRAVITY_DEFAULT = -9.8
 export const MARGIN_DEFAULT = 0.05
 
-// Rigid body has infinite mass and cannot move.
-export const BODYTYPE_STATIC = 0
-
 // Rigid body is simulated according to applied forces.
-export const BODYTYPE_DYNAMIC = 1
+export const BODYTYPE_DYNAMIC = 0
+
+// Rigid body has infinite mass and cannot move.
+export const BODYTYPE_STATIC = 1
 
 // Rigid body has infinite mass and does not respond to forces but can still be moved by setting their velocity or position.
 export const BODYTYPE_KINEMATIC = 2
 
 // Collision shapes
 export const BODYSHAPE_BOX = 0
-export const BODYSHAPE_CYLINDER = 1
-export const BODYSHAPE_SPHERE = 2
-export const BODYSHAPE_CAPSULE = 3
-export const BODYSHAPE_CONE = 4
-export const BODYSHAPE_HULL = 5
-export const BODYSHAPE_HACD = 6 // Hierarchical Approximate Convex Decomposition
-export const BODYSHAPE_VHACD = 7 // Volumetric Hierarchical Approximate Convex Decomposition
-export const BODYSHAPE_HEIGHTFIELD = 8
-export const BODYSHAPE_MESH = 9
+export const BODYSHAPE_CAPSULE = 1
+export const BODYSHAPE_CONE = 2
+export const BODYSHAPE_CYLINDER = 3
+export const BODYSHAPE_HEIGHTFIELD = 4
+// export const BODYSHAPE_HULL = 5
+export const BODYSHAPE_MESH = 6
+export const BODYSHAPE_SPHERE = 7
 
 // Collision flags
-export const BODYFLAG_KINEMATIC_OBJECT = 2
 export const BODYFLAG_NORESPONSE_OBJECT = 4
+export const BODYFLAG_KINEMATIC_OBJECT = 2
 export const BODYFLAG_STATIC_OBJECT = 1
 
 // Activation states

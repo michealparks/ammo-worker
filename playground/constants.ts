@@ -1,1 +1,1 @@
-export const NUM_MESHES = 300
+export const NUM_MESHES = 100

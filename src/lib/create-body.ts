@@ -1,6 +1,5 @@
 import type { AmmoLib, Flag, Body } from '../types'
 import { createShape } from './create-shape'
-import { MARGIN_DEFAULT } from '../constants'
 
 export const createBody = (ammo: AmmoLib, data: Body, inertia: boolean, flag?: Flag) => {
   const {
@@ -15,7 +14,6 @@ export const createBody = (ammo: AmmoLib, data: Body, inertia: boolean, flag?: F
   let localInertia: Ammo.btVector3 | undefined
 
   const shape = createShape(ammo, data)
-  shape.setMargin(MARGIN_DEFAULT)
 
   if (inertia) {
     localInertia = new ammo.btVector3(0, 0, 0)
@@ -33,7 +31,13 @@ export const createBody = (ammo: AmmoLib, data: Body, inertia: boolean, flag?: F
 
   const motionState = new ammo.btDefaultMotionState(transform)
   const bodyInfo = new ammo.btRigidBodyConstructionInfo(mass, motionState, shape, localInertia)
-  const rigidbody = new ammo.btRigidBody(bodyInfo)
+  const rigidbody = new ammo.btRigidBody(bodyInfo) as Ammo.btRigidBody & {
+    type: number
+    trigger: boolean
+    id: number
+    name: string
+    linkedId?: number
+  }
 
   rigidbody.type = data.type
   rigidbody.trigger = false
