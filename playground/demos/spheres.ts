@@ -1,6 +1,6 @@
 import * as THREE from 'three'
+import { scene } from 'three-kit'
 import * as constants from '../constants'
-import { scene } from '../renderer'
 import { ammo } from '../../src/main'
 import { Body } from '../../src/types'
 import { randomColor } from '../lib/colors'
@@ -8,10 +8,11 @@ import { randomColor } from '../lib/colors'
 export const init = () => {
   const bodies: Body[] = []
 
-  const radius = 1
+  const radius = 0.5
 
   const material = new THREE.MeshStandardMaterial()
-  const geometry = new THREE.SphereGeometry(radius)
+  const geometry = new THREE.SphereGeometry(radius, 6, 6)
+  material.flatShading = true
 
   const mesh = new THREE.InstancedMesh(geometry, material, constants.NUM_MESHES)
   mesh.castShadow = true

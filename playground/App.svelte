@@ -50,5 +50,6 @@ const handleInput = (event: Event) => {
     <option>capsules</option>
     <option>meshes</option>
     <option>spheres</option>
+    <option>translation</option>
   </select>
 </div>

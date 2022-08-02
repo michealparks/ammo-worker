@@ -52,3 +52,8 @@ export const createAmmo = async (parameters: {
     run: api.run,
   }
 }
+
+if (import.meta.env.THREE_AMMO_DEBUG === 'true') {
+  const debug = import('./debug')
+  console.log(debug)
+}

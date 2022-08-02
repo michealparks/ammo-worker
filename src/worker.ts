@@ -2,7 +2,6 @@ import AmmoLib from './ammo'
 import * as Comlink from 'comlink'
 import * as constants from './constants'
 import type { Flag, Body, TriggerVolume } from './types'
-import { createWorld } from './lib/create-world'
 import { createBody } from './lib/create-body'
 import { createTrigger } from './lib/create-trigger'
 import { checkForCollisions, cleanOldCollisions } from './lib/collisions'
@@ -219,7 +218,7 @@ const applyCentralForces = (ids: Uint16Array, impulses: Float32Array) => {
   }
 }
 
-Comlink.expose({
+export const api = {
   init,
   run,
   stop,
@@ -234,4 +233,6 @@ Comlink.expose({
   applyCentralImpulses,
   applyCentralForce,
   applyCentralForces,
-})
+}
+
+Comlink.expose(api)

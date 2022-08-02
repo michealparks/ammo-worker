@@ -20,7 +20,16 @@ export const createTrigger = (ammo: AmmoLib, data: Body) => {
 
   const motionState = new ammo.btDefaultMotionState(transform)
   const bodyInfo = new ammo.btRigidBodyConstructionInfo(1, motionState, shape)
-  const trigger = new ammo.btRigidBody(bodyInfo)
+  const trigger = new ammo.btRigidBody(bodyInfo) as Ammo.btRigidBody & {
+    type: number
+    trigger: true
+    id: number
+    name: string
+    enter: string
+    leave: string
+    entity: string
+    linkedId?: number
+  }
 
   trigger.type = constants.BODYTYPE_STATIC
   trigger.trigger = true

@@ -3,6 +3,8 @@ import Stats from 'three/examples/jsm/libs/stats.module'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 import { ammo } from '../src/main'
 import { softShadows } from '@react-three/drei'
+import { camera, renderer, scene, setAnimationLoop } from 'three-kit'
+import * as debug from 'three-kit/debug'
 
 // softShadows({
 //   frustum: 1.75,
@@ -16,37 +18,19 @@ let physicsDt = -1
 
 ammo.on('tick', ({ dt }) => {
   physicsDt = dt
-  
 })
 
 setInterval(() => {
   physicsPanel.update(physicsDt, 16);
 }, 500)
 
-const camera = new THREE.PerspectiveCamera(
-  50,
-  window.innerWidth / window.innerHeight,
-  0.1,
-  500
-)
+// camera.fov = 50
+camera.near = 0.1
+camera.far = 500
 camera.position.set(20, 20, 40)
 camera.lookAt(0, 0, 0)
 
-export const scene = new THREE.Scene()
-scene.background = new THREE.Color( 'lightblue' );
-
-const dpi = window.devicePixelRatio
-const renderer = new THREE.WebGLRenderer()
-renderer.setSize(window.innerWidth * dpi, window.innerHeight * dpi)
-document.body.appendChild(renderer.domElement)
-renderer.domElement.style.width = '100vw'
-renderer.domElement.style.height = '100vh'
-renderer.toneMapping = THREE.ACESFilmicToneMapping
-renderer.toneMappingExposure = 1
-renderer.outputEncoding = THREE.sRGBEncoding
-renderer.physicallyCorrectLights = true
-renderer.shadowMap.enabled = true
-renderer.shadowMap.type = THREE.PCFSoftShadowMap
+scene.background = new THREE.Color('lightblue');
 
 const controls = new OrbitControls(camera, renderer.domElement)
 controls.dampingFactor = 1
@@ -76,8 +60,8 @@ directionalLight.shadow.camera.right = 20
 directionalLight.shadow.camera.top = 20
 directionalLight.shadow.camera.bottom = -20
 
-export const animate = () => {
-  window.requestAnimationFrame(animate)
+setAnimationLoop(() => {
   renderer.render(scene, camera)
   stats.update()
-}
+  debug.update()
+})

@@ -71,7 +71,7 @@ export const checkForCollisions = (ammo: AmmoLib, world: Ammo.btDiscreteDynamics
       if (isNewCollision && isTriggerBody1 === false) {
         registerEvent(triggerEnter, body0.id, body1.id)
 
-        if (body0.enter && (body1.name === body0.entity || body0.entity === 'any')) {
+        if ('enter' in body0 && (body1.name === body0.entity || body0.entity === 'any')) {
           globalEvents.push([body0.enter, body0.id, body1.id])
         }
       }
@@ -80,7 +80,7 @@ export const checkForCollisions = (ammo: AmmoLib, world: Ammo.btDiscreteDynamics
       if (isNewCollision && isTriggerBody0 === false) {
         registerEvent(triggerEnter, body1.id, body0.id)
 
-        if (body1.enter && (body0.name === body1.entity || body1.entity === 'any')) {
+        if ('enter' in body1 && (body0.name === body1.entity || body1.entity === 'any')) {
           globalEvents.push([body1.enter, body1.id, body0.id])
         }
       }

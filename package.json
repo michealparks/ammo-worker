@@ -3,11 +3,11 @@
   "private": false,
   "version": "0.0.0",
   "type": "module",
-  "main": "./src/main.ts",
   "exports": {
     ".": "./src/main.ts",
     "./types": "./src/types.ts",
-    "./adapters": "./src/adapters"
+    "./adapters": "./src/adapters",
+    "./debug": "./src/debug"
   },
   "scripts": {
     "start": "vite --host",
@@ -22,18 +22,20 @@
     "comlink": "^4.3.1"
   },
   "devDependencies": {
-    "@react-three/drei": "^9.18.0",
+    "@react-three/drei": "^9.19.0",
     "@rollup/plugin-alias": "^3.1.9",
     "@rollup/plugin-replace": "^4.0.0",
     "@sveltejs/vite-plugin-svelte": "^1.0.1",
     "@tsconfig/svelte": "^3.0.0",
+    "@tweakpane/core": "^1.1.0",
     "@types/ammo.js": "github:osman-turan/ammo.js-typings",
     "@types/gl-matrix": "^3.2.0",
     "@types/three": "^0.143.0",
     "ammo.js": "github:kripken/ammo.js",
     "gl-matrix": "^3.4.3",
-    "nice-color-palettes": "^3.0.0",
+    "nice-color-palettes": "^2.0.0",
     "postcss": "^8.4.14",
+    "postprocessing": "^6.28.4",
     "rollup": "^2.77.2",
     "rollup-plugin-copy": "^3.4.0",
     "rollup-plugin-filesize": "^9.1.2",
@@ -43,7 +45,9 @@
     "svelte-preprocess": "^4.10.7",
     "tailwindcss": "^3.1.7",
     "three": "^0.143.0",
+    "three-kit": "github:michealparks/three-kit",
     "tslib": "^2.4.0",
+    "tweakpane": "^3.1.0",
     "typescript": "^4.7.4",
     "vite": "^3.0.4"
   }

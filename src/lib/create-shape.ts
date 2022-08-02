@@ -9,29 +9,37 @@ type CollisionShape =
   | Ammo.btSphereShape
   | Ammo.btBvhTriangleMeshShape
 
+interface ShapeHelpers {
+  type: types.BodyType
+  destroy(): void
+  resources?: Ammo.Type[]
+  heightfieldData?: number
+}
+  
+
 export const createShape = (ammo: types.AmmoLib, body: types.RigidBody) => {
-  let shape: CollisionShape
+  let shape: CollisionShape & ShapeHelpers
 
   switch (body.shape) {
     case constants.BODYSHAPE_BOX:
-      shape = createBoxShape(ammo, body as types.BoxRigidBody)
+      shape = createBoxShape(ammo, body as types.BoxRigidBody) as CollisionShape & ShapeHelpers
       break
     case constants.BODYSHAPE_CAPSULE:
-      shape = createCapsuleShape(ammo, body as types.CapsuleRigidBody)
+      shape = createCapsuleShape(ammo, body as types.CapsuleRigidBody) as CollisionShape & ShapeHelpers
       break
     case constants.BODYSHAPE_CONE:
-      shape = createConeShape(ammo, body as types.ConeRigidBody)
+      shape = createConeShape(ammo, body as types.ConeRigidBody) as CollisionShape & ShapeHelpers
       break
     case constants.BODYSHAPE_CYLINDER:
-      shape = createCylinderShape(ammo, body as types.CylinderRigidBody)
+      shape = createCylinderShape(ammo, body as types.CylinderRigidBody) as CollisionShape & ShapeHelpers
       break
     case constants.BODYSHAPE_HEIGHTFIELD:
-      shape = createHeightfieldTerrainShape(ammo, body as types.HeightfieldTerrainRigidBody)
+      shape = createHeightfieldTerrainShape(ammo, body as types.HeightfieldTerrainRigidBody) as CollisionShape & ShapeHelpers
     case constants.BODYSHAPE_SPHERE:
-      shape = new ammo.btSphereShape((body as types.SphereRigidBody).radius)
+      shape = new ammo.btSphereShape((body as types.SphereRigidBody).radius) as CollisionShape & ShapeHelpers
       break
     case constants.BODYSHAPE_MESH:
-      shape = createMeshShape(ammo, body as types.MeshRigidBody)
+      shape = createMeshShape(ammo, body as types.MeshRigidBody) as CollisionShape & ShapeHelpers
       break
     default:
       throw new Error('Shape not supported yet: ' + body.shape)
@@ -193,13 +201,6 @@ const createMeshShape = (ammo: types.AmmoLib, body: types.MeshRigidBody) => {
   ammo.destroy(vec3)
 
   return shape
-}
-
-interface ShapeHelpers {
-  type: types.BodyType
-  destroy(): void
-  resources?: Ammo.Type[]
-  heightfieldData?: number
 }
 
 const finishCollisionShape = (ammo: types.AmmoLib, shape: CollisionShape & ShapeHelpers, body: types.RigidBody) => {

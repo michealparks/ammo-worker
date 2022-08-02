@@ -1,7 +1,7 @@
-import type { Terrain } from '../types'
+import type { Terrain, AmmoLib } from '../types'
 import * as constants from '../constants'
 
-export const createTerrainShape = (ammo: typeof Ammo, terrain: Terrain) => {
+export const createTerrainShape = (ammo: AmmoLib, terrain: Terrain) => {
   const {
     width,
     depth,

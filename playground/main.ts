@@ -1,20 +1,23 @@
+import { scene } from 'three-kit'
 import './index.css'
+import './renderer'
 import App from './App.svelte'
 import * as THREE from 'three'
 import { createAmmo } from '../src/main'
-import { scene, animate } from './renderer'
 import * as constants from './constants'
 import { Volume } from '../src/types'
-import * as boxes from './shapes/boxes'
-import * as capsules from './shapes/capsules'
-import * as meshes from './shapes/meshes'
-import * as spheres from './shapes/spheres'
+import * as boxes from './demos/boxes'
+import * as capsules from './demos/capsules'
+import * as meshes from './demos/meshes'
+import * as spheres from './demos/spheres'
+import * as translation from './demos/translation'
 
-const shapes = {
+const demos = {
   boxes,
   capsules,
   meshes,
   spheres,
+  translation,
 }
 
 const ammo = await createAmmo({
@@ -63,7 +66,7 @@ const M = 20
 const main = async () => {
   const demo = window.localStorage.getItem('demo') || 'boxes'
   
-  const { mesh, bodies } = shapes[demo].init()
+  const { mesh, bodies } = demos[demo].init()
 
   // Add floor
   bodies.push({
@@ -145,8 +148,6 @@ const main = async () => {
   await ammo.createRigidBodies(bodies)
   await ammo.createTriggers(triggers)
   await ammo.run()
-
-  animate()
 }
 
 main()
