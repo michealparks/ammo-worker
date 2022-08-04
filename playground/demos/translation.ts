@@ -14,7 +14,15 @@ export const init = () => {
 
   const bodies: Body[] = []
 
+  const playerGeo = new THREE.BoxGeometry(2, 2, 2)
+  const playerMat = new THREE.MeshStandardMaterial({ color: 'lightblue' })
+  const player = new THREE.Mesh(playerGeo, playerMat)
+  player.name = 'player'
+  scene.add(player)
+  player.position.set(0, 1, 0)
+
   const mesh = new THREE.InstancedMesh(geometry, material, constants.NUM_MESHES)
+  mesh.name = 'mesh instances'
   mesh.castShadow = true
   mesh.receiveShadow = true
   scene.add(mesh)
@@ -48,6 +56,19 @@ export const init = () => {
       },
       sprite: false,
     })
+
+    bodies.push({
+      id: player.id,
+      name: player.name,
+      type: ammo.BODYTYPE_KINEMATIC,
+      shape: ammo.BODYSHAPE_BOX,
+      transform: new Float32Array([0, 1, 0, 0, 0, 0, 1]),
+      halfExtents: {
+        x: 1,
+        y: 1,
+        z: 1,
+      }
+    })
   
     color.set(randomColor())
   
@@ -56,8 +77,19 @@ export const init = () => {
 
   mesh.instanceColor!.needsUpdate = true
 
+  const playerTransform = new Float32Array(7)
+  playerTransform[6] = 1
   const update = () => {
-    console.log(controls)
+    player.position.x += controls.keyboard.x / 5
+    player.position.z -= controls.keyboard.y / 5
+
+    playerTransform[0] = player.position.x
+    playerTransform[2] = player.position.z
+
+    if (controls.keyboard.x || controls.keyboard.y) {
+      ammo.setTransform(player.id, playerTransform)
+    }
+
   }
 
   return { bodies, mesh, update }

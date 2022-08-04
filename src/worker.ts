@@ -77,8 +77,10 @@ const setTransform = (id: number, bodyTransform: Float32Array, shift = 0) => {
   vec.setValue(bodyTransform[shift + 0], bodyTransform[shift + 1], bodyTransform[shift + 2])
   quat.setValue(bodyTransform[shift + 3], bodyTransform[shift + 4], bodyTransform[shift + 5], bodyTransform[shift + 6])
   transform.setOrigin(vec)
-  transform.setRotation(quat)
+  transform.setRotation(quat) 
   body.setWorldTransform(transform)
+
+  console.log(body.name)
 
   if (body.type === constants.BODYTYPE_KINEMATIC) {
     body.getMotionState().setWorldTransform(transform)

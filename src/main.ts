@@ -53,6 +53,7 @@ export const ammo = {
   setSimulationSpeed: api.setSimulationSpeed,
   setGravity: api.setGravity,
   setFriction: api.setFriction,
+  setTransform: api.setTransform,
   setTransforms: api.setTransforms,
   createRigidBodies: api.createRigidBodies,
   createTriggers: api.createTriggers,
