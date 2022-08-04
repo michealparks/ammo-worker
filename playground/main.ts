@@ -1,9 +1,11 @@
-import { scene } from 'three-kit'
 import './index.css'
+import { scene, setAnimationLoop } from 'three-kit'
+import * as debug from 'three-kit/debug'
+
 import './renderer'
 import App from './App.svelte'
 import * as THREE from 'three'
-import { createAmmo } from '../src/main'
+import { ammo } from '../src/main'
 import * as constants from './constants'
 import { Volume } from '../src/types'
 import * as boxes from './demos/boxes'
@@ -19,14 +21,6 @@ const demos = {
   spheres,
   translation,
 }
-
-const ammo = await createAmmo({
-  // workerPath: '../dist/worker.js',
-  workerPath: '../src/worker.ts',
-  wasmPath: import.meta.env.DEV
-    ? '/src/ammo.wasm.wasm'
-    : '/ammo-worker/ammo.wasm.wasm'
-})
 
 const quaternion = new THREE.Quaternion()
 const matrix = new THREE.Matrix4()
@@ -66,7 +60,7 @@ const M = 20
 const main = async () => {
   const demo = window.localStorage.getItem('demo') || 'boxes'
   
-  const { mesh, bodies } = demos[demo].init()
+  const { mesh, bodies, callback, update } = demos[demo].init()
 
   // Add floor
   bodies.push({
@@ -91,18 +85,26 @@ const main = async () => {
 
   // Add event for random impulses
   document.addEventListener('keydown', (event) => {
-    if (event.key.toLowerCase() !== 'i') return
-  
-    const ids = new Uint16Array(constants.NUM_MESHES)
-    const impulses = new Float32Array(constants.NUM_MESHES * 3)
-    for (let i = 0, j = 0; i < bodies.length; i += 1, j += 3) {
-      ids[i] = bodies[i].id
-      impulses[j + 0] = (Math.random() - 0.5) * M
-      impulses[j + 1] = (Math.random() - 0.5) * M
-      impulses[j + 2] = (Math.random() - 0.5) * M
+    switch (event.key.toLowerCase()) {
+    case 'i':
+      const ids = new Uint16Array(constants.NUM_MESHES)
+      const impulses = new Float32Array(constants.NUM_MESHES * 3)
+      for (let i = 0, j = 0; i < bodies.length; i += 1, j += 3) {
+        ids[i] = bodies[i].id
+        impulses[j + 0] = (Math.random() - 0.5) * M
+        impulses[j + 1] = (Math.random() - 0.5) * M
+        impulses[j + 2] = (Math.random() - 0.5) * M
+      }
+    
+      ammo.applyCentralImpulses(ids, impulses)
+      break
+    case 'p':
+      if (ammo.running) {
+        ammo.pause()
+      } else {
+        ammo.run()
+      }
     }
-  
-    ammo.applyCentralImpulses(ids, impulses)
   })
 
   ammo.on('tick', (data) => {
@@ -145,9 +147,17 @@ const main = async () => {
     mesh.instanceMatrix.needsUpdate = true
   })
 
+  await ammo.init()
   await ammo.createRigidBodies(bodies)
   await ammo.createTriggers(triggers)
   await ammo.run()
+
+  callback?.(ammo)
+
+  setAnimationLoop(() => {
+    debug.update()
+    update?.()
+  })  
 }
 
 main()

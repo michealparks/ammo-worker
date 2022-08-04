@@ -22,7 +22,7 @@
     "comlink": "^4.3.1"
   },
   "devDependencies": {
-    "@react-three/drei": "^9.19.0",
+    "@react-three/drei": "^9.19.6",
     "@rollup/plugin-alias": "^3.1.9",
     "@rollup/plugin-replace": "^4.0.0",
     "@sveltejs/vite-plugin-svelte": "^1.0.1",
@@ -35,7 +35,7 @@
     "gl-matrix": "^3.4.3",
     "nice-color-palettes": "^2.0.0",
     "postcss": "^8.4.14",
-    "postprocessing": "^6.28.4",
+    "postprocessing": "^6.28.5",
     "rollup": "^2.77.2",
     "rollup-plugin-copy": "^3.4.0",
     "rollup-plugin-filesize": "^9.1.2",

@@ -28,10 +28,7 @@ export const init = () => {
   const vertices = new Float32Array(geometry.attributes.position.array)
   const indexes = mesh.geometry.index ? new Float32Array(mesh.geometry.index.array) : undefined
 
-  console.log(vertices, indexes)
-
   const results = ammoThree.gatherGeometries(mesh)
-  console.log(results)
 
   for (let i = 0; i < constants.NUM_MESHES; i += 1) {
     const transform = new Float32Array([Math.random(), 20 + i, Math.random(), 0, 0, 0, 1])

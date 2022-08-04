@@ -1,16 +1,20 @@
-import AmmoLib from './ammo'
+import AmmoModule from './ammo'
 import * as Comlink from 'comlink'
 import * as constants from './constants'
-import type { Flag, Body, TriggerVolume } from './types'
+import type { AmmoLib, Flag, Body, TriggerVolume } from './types'
 import { createBody } from './lib/create-body'
 import { createTrigger } from './lib/create-trigger'
 import { checkForCollisions, cleanOldCollisions } from './lib/collisions'
 
-let ammo: typeof Ammo
+let ammo: AmmoLib
 let vec: Ammo.btVector3
 let quat: Ammo.btQuaternion
 let transform: Ammo.btTransform
 let world: Ammo.btDiscreteDynamicsWorld
+
+let rayOrigin: Ammo.btVector3
+let rayDestination: Ammo.btVector3
+let rayCallback: Ammo.ClosestRayResultCallback
 
 let now = 0
 let dt = 0
@@ -20,20 +24,19 @@ let simSpeed = 1000 / 60
 const bodies = new Map<number, Ammo.btRigidBody>()
 const dynamicBodies = new Set<Ammo.btRigidBody>()
 
-const initializeWasm = (wasmPath: string) => {
-  return AmmoLib.bind(undefined, {
+const init = async () => {
+  ammo = await AmmoModule({
     locateFile() {
-      return wasmPath
+      return import.meta.env.THREE_AMMO_WASM_PATH
     }
-  });
-}
-
-const init = async ({ wasmPath }: { wasmPath: string }) => {
-  const AmmoModule = initializeWasm(wasmPath)
-  ammo = await AmmoModule()
+  })
   vec = new ammo.btVector3()
-  quat = new ammo.btQuaternion(0, 0, 0, 0)
+  quat = new ammo.btQuaternion(0, 0, 0, 1)
   transform = new ammo.btTransform()
+
+  rayOrigin = new ammo.btVector3()
+  rayDestination = new ammo.btVector3()
+  rayCallback = new ammo.ClosestRayResultCallback(rayOrigin, rayDestination)
 
   const collisionConfiguration = new ammo.btDefaultCollisionConfiguration()
   const dispatcher = new ammo.btCollisionDispatcher(collisionConfiguration)
@@ -68,8 +71,8 @@ const setTransform = (id: number, bodyTransform: Float32Array, shift = 0) => {
   const body = bodies.get(id)!
 
   vec.setValue(0, 0, 0)
-  body.setAngularVelocity(vec);
-	body.setLinearVelocity(vec);
+  body.setAngularVelocity(vec)
+	body.setLinearVelocity(vec)
 
   vec.setValue(bodyTransform[shift + 0], bodyTransform[shift + 1], bodyTransform[shift + 2])
   quat.setValue(bodyTransform[shift + 3], bodyTransform[shift + 4], bodyTransform[shift + 5], bodyTransform[shift + 6])
@@ -134,10 +137,11 @@ const createTriggers = (objects: TriggerVolume[]) => {
 let timerId = -1
 
 const run = () => {
+  now = then = performance.now()
   tick()
 }
 
-const stop = () => {
+const pause = () => {
   clearTimeout(timerId)
 }
 
@@ -218,21 +222,51 @@ const applyCentralForces = (ids: Uint16Array, impulses: Float32Array) => {
   }
 }
 
+const raycast = (start, end) => {
+  const ray = ammo.castObject(rayCallback, ammo.RayResultCallback)
+  ray.set_m_closestHitFraction(1)
+  ray.set_m_collisionObject(null)
+
+  rayOrigin.setValue(start.x, start.y, start.z)
+  rayDestination.setValue(end.x, end.y, end.z)
+  rayCallback.get_m_rayFromWorld().setValue(start.x, start.y, start.z)
+  rayCallback.get_m_rayToWorld().setValue(end.x, end.y, end.z)
+
+  world.rayTest(rayOrigin, rayDestination, rayCallback)
+
+  const hits = []
+  if (rayCallback.hasHit()) {
+    const object = rayCallback.m_collisionObject
+    // const ud0 = ammo.castObject(object.getUserPointer(), Ammo.btVector3).userData
+
+    const point = rayCallback.get_m_hitPointWorld()
+
+    hits.push({
+      id: object.id,
+      // name: ud0.name,
+      position: [point.x(), point.y(), point.z()]
+    })
+  }
+
+  return hits
+}
+
 export const api = {
   init,
   run,
-  stop,
+  pause,
+  setSimulationSpeed,
   setGravity,
   setFriction,
   setTransform,
   setTransforms,
-  setSimulationSpeed,
   createRigidBodies,
   createTriggers,
   applyCentralImpulse,
   applyCentralImpulses,
   applyCentralForce,
   applyCentralForces,
+  raycast,
 }
 
 Comlink.expose(api)

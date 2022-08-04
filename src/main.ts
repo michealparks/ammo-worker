@@ -7,53 +7,63 @@ export { computeShape } from './lib/compute-shape'
 
 const events = new Map()
 
+const worker = new Worker(
+  new URL(import.meta.env.THREE_AMMO_WORKER_PATH, import.meta.url),
+  { type: 'module' }
+)
+
+const api = Comlink.wrap<typeof API>(worker)
+
 const on = (eventName: string, callback: (data: any) => void) => {
   if (events.has(eventName) === false) {
     events.set(eventName, new Set())
   }
 
   events.get(eventName).add(callback)
-} 
-
-export const ammo = {
-  ...constants,
-  on,
 }
 
-export const createAmmo = async (parameters: {
-  workerPath: string
-  wasmPath: string
-}) => {
-  const worker = new Worker(new URL(parameters.workerPath, import.meta.url), { type: 'module' })
-  const api = Comlink.wrap<typeof API>(worker)
-  
-  worker.onmessage = ({ data }) => {
-    if (data.id) {
-      return
-    }
+const run = async () => {
+  await api.run()
+  ammo.running = true
+}
 
-    if (events.has('tick') === false) return
+const pause = async () => {
+  await api.pause()
+  ammo.running = false
+}
 
-    for (const callback of events.get('tick')) {
-      callback(data)
-    }
+worker.onmessage = ({ data }) => {
+  if (data.id) {
+    return
   }
 
-  await api.init(parameters)
+  if (events.has('tick') === false) return
 
-  return {
-    ...ammo,
-    setSimulationSpeed: api.setSimulationSpeed,
-    setGravity: api.setGravity,
-    setTransforms: api.setTransforms,
-    createRigidBodies: api.createRigidBodies,
-    createTriggers: api.createTriggers,
-    applyCentralImpulses: api.applyCentralImpulses,
-    run: api.run,
+  for (const callback of events.get('tick')) {
+    callback(data)
   }
+}
+
+export const ammo = {
+  running: false,
+  ...constants,
+  on,
+  init: api.init,
+  run,
+  pause,
+  setSimulationSpeed: api.setSimulationSpeed,
+  setGravity: api.setGravity,
+  setFriction: api.setFriction,
+  setTransforms: api.setTransforms,
+  createRigidBodies: api.createRigidBodies,
+  createTriggers: api.createTriggers,
+  applyCentralImpulse: api.applyCentralImpulse,
+  applyCentralImpulses: api.applyCentralImpulses,
+  applyCentralForce: api.applyCentralForce,
+  applyCentralForces: api.applyCentralForces,
+  raycast: api.raycast,
 }
 
 if (import.meta.env.THREE_AMMO_DEBUG === 'true') {
-  const debug = import('./debug')
-  console.log(debug)
+  const debug = await import('./debug')
 }

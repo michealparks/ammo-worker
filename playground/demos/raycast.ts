@@ -1,6 +1,5 @@
 import * as THREE from 'three'
-import { scene, controls } from 'three-kit'
-import * as constants from '../constants'
+import { scene } from 'three-kit'
 import { id } from '../utils'
 import { ammo } from '../../src/main'
 import { Body } from '../../src/types'
@@ -21,7 +20,7 @@ export const init = () => {
 
   const color = new THREE.Color()
 
-  for (let i = 0; i < constants.NUM_MESHES; i += 1) {
+  for (let i = 0; i < 10; i += 1) {
     const size = 15
     const transform = new Float32Array([
       (Math.random() * size) - size / 2,
@@ -56,13 +55,17 @@ export const init = () => {
 
   mesh.instanceColor!.needsUpdate = true
 
-  controls.on('key')
+  const cb = (ammo) => {
+    document.addEventListener('keydown', () => {
 
-  const update = () => {
-    console.log(controls.gamepad)
+    })
+
+    document.addEventListener('keyup', () => {
+
+    })
   }
 
-  return { bodies, mesh, update }
+  return { bodies, mesh, cb }
 }
 
 
