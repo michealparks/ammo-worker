@@ -5,6 +5,7 @@ import * as debug from 'three-kit/debug'
 import './renderer'
 import App from './App.svelte'
 import * as THREE from 'three'
+
 import { ammo } from '../src/main'
 import * as constants from './constants'
 import { Volume } from '../src/types'
@@ -31,8 +32,7 @@ const floorHeight = 0.3
   const geometry = new THREE.BoxBufferGeometry(floorSize, floorHeight, floorSize, 1, 1)
   const material = new THREE.MeshStandardMaterial({ color: 0xCCCCCC })
   const mesh = new THREE.Mesh(geometry, material)
-  mesh.updateMatrix()
-  mesh.matrixAutoUpdate = false
+  mesh.name = 'floor'
   mesh.receiveShadow = true
   scene.add(mesh)
 }
@@ -95,7 +95,7 @@ const main = async () => {
         impulses[j + 1] = (Math.random() - 0.5) * M
         impulses[j + 2] = (Math.random() - 0.5) * M
       }
-    
+
       ammo.applyCentralImpulses(ids, impulses)
       break
     case 'p':
@@ -109,14 +109,14 @@ const main = async () => {
 
   ammo.on('tick', (data) => {
     const { transforms, triggerEnter } = data
-  
+
     for (let i = 0, s = 0; i < constants.NUM_MESHES; i += 1, s += 7) {
       quaternion.set(transforms[s + 3], transforms[s + 4], transforms[s + 5], transforms[s + 6])
       matrix.makeRotationFromQuaternion(quaternion)
       matrix.setPosition(transforms[s + 0], transforms[s + 1], transforms[s + 2])
       mesh.setMatrixAt(i, matrix)
     }
-  
+
     let resetIds: number[] = []
   
     if (triggerEnter.length > 0) {
@@ -127,8 +127,7 @@ const main = async () => {
           resetIds.push(ids[j])
         }
       }
-      
-  
+
       let transforms = new Float32Array(resetIds.length * 7) 
   
       for (let i = 0; i < resetIds.length * 7; i += 7) {
@@ -157,7 +156,9 @@ const main = async () => {
   setAnimationLoop(() => {
     debug.update()
     update?.()
-  })  
+  })
+
+  import('../src/debug')
 }
 
 main()

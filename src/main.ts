@@ -1,4 +1,3 @@
-
 import * as Comlink from 'comlink'
 import type { api as API } from './worker'
 import * as constants from './constants'
@@ -14,7 +13,7 @@ const worker = new Worker(
 
 const api = Comlink.wrap<typeof API>(worker)
 
-const on = (eventName: string, callback: (data: any) => void) => {
+export const on = (eventName: string, callback: (data: any) => void) => {
   if (events.has(eventName) === false) {
     events.set(eventName, new Set())
   }
@@ -62,8 +61,4 @@ export const ammo = {
   applyCentralForce: api.applyCentralForce,
   applyCentralForces: api.applyCentralForces,
   raycast: api.raycast,
-}
-
-if (import.meta.env.THREE_AMMO_DEBUG === 'true') {
-  const debug = await import('./debug')
 }

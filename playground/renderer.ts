@@ -42,4 +42,4 @@ directionalLight.shadow.camera.left = -20
 directionalLight.shadow.camera.right = 20
 directionalLight.shadow.camera.top = 20
 directionalLight.shadow.camera.bottom = -20
-directionalLight.shadow.camera.far = 20
+directionalLight.shadow.camera.far = 25

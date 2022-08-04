@@ -56,10 +56,8 @@ export const init = () => {
 
   mesh.instanceColor!.needsUpdate = true
 
-  controls.on('key')
-
   const update = () => {
-    console.log(controls.gamepad)
+    console.log(controls)
   }
 
   return { bodies, mesh, update }

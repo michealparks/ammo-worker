@@ -19,7 +19,7 @@ let rayCallback: Ammo.ClosestRayResultCallback
 let now = 0
 let dt = 0
 let then = 0
-let simSpeed = 1000 / 60
+let simSpeed = 1000 / 63
 
 const bodies = new Map<number, Ammo.btRigidBody>()
 const dynamicBodies = new Set<Ammo.btRigidBody>()
@@ -188,7 +188,7 @@ const tick = () => {
 
   postMessage({
     ...data,
-    dt: 1000 / (dt * 1000),
+    fps: 1000 / (dt * 1000),
     transforms,
     globalEvents
   })

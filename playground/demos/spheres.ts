@@ -34,7 +34,7 @@ export const init = () => {
       linearDamping: 0.1,
       angularDamping: 0.1,
       linkedId: -1,
-      transform: new Float32Array([Math.random(), 1 + id, Math.random(), 0, 0, 0, 1]),
+      transform: new Float32Array([Math.random() * 1.5, 1 + id, Math.random() * 1.5, 0, 0, 0, 1]),
       radius,
       sprite: false,
     })
