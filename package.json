@@ -6,9 +6,18 @@
   "types": "./src/main.ts",
   "exports": {
     ".": "./src/main.ts",
-    "./types": "./src/types.ts",
-    "./adapters": "./src/adapters",
-    "./debug": "./src/debug"
+    "./types": {
+      "import": "./src/types.ts",
+      "types": "./src/types.ts"
+    },
+    "./adapters/three": {
+      "import": "./src/adapters/three.ts",
+      "types": "./src/adapters/three.ts"
+    },
+    "./debug": {
+      "import": "./src/debug/index.ts",
+      "types": "./src/debug/index.ts"
+    }
   },
   "scripts": {
     "start": "vite --host",
