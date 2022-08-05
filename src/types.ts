@@ -38,7 +38,6 @@ export interface Vector3 {
 
 export interface RigidBody {
   id: number
-  name: string
   type: BodyType
   shape: BodyShape
   mass?: number
@@ -110,13 +109,13 @@ export type Body =
 
 export interface TriggerVolume {
   id: number
-  name: string
   shape: BodyShape
   enter: string
   leave: string
-  entity: string
+  entity: number
   linkedRigidbodyId?: number
   transform: Float32Array
+  halfExtents: Vector3
 }
 
 export interface BoxTriggerVolume extends TriggerVolume {

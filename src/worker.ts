@@ -19,7 +19,8 @@ let rayCallback: Ammo.ClosestRayResultCallback
 let now = 0
 let dt = 0
 let then = 0
-let simSpeed = 1000 / 63
+let simSpeed = 1000 / 60
+let tickId = -1
 
 const bodies = new Map<number, Ammo.btRigidBody>()
 const dynamicBodies = new Set<Ammo.btRigidBody>()
@@ -80,8 +81,6 @@ const setTransform = (id: number, bodyTransform: Float32Array, shift = 0) => {
   transform.setRotation(quat) 
   body.setWorldTransform(transform)
 
-  console.log(body.name)
-
   if (body.type === constants.BODYTYPE_KINEMATIC) {
     body.getMotionState().setWorldTransform(transform)
   }
@@ -136,15 +135,13 @@ const createTriggers = (objects: TriggerVolume[]) => {
   }
 }
 
-let timerId = -1
-
 const run = () => {
   now = then = performance.now()
-  tick()
+  tickId = self.setInterval(tick, simSpeed)
 }
 
 const pause = () => {
-  clearTimeout(timerId)
+  clearInterval(tickId)
 }
 
 let transforms = new Float32Array(1000 * 7)
@@ -156,7 +153,6 @@ const tick = () => {
 
   world.stepSimulation(dt, constants.MAX_SUBSTEPS, constants.FIXED_TIMESTEP)
 
-  
   let index = 0
   let shift = 0
 
@@ -194,8 +190,6 @@ const tick = () => {
     transforms,
     globalEvents
   })
-
-  timerId = self.setTimeout(tick, simSpeed)
 }
 
 const applyCentralImpulse = (id: number, x: number, y: number, z: number) => {

@@ -9,23 +9,30 @@ const geometry = new THREE.BufferGeometry()
 const line = new THREE.LineSegments(geometry, material)
 line.frustumCulled = false
 
-const parameters = {
-  draw: false
-}
-
 const add = scene.add.bind(scene)
 scene.add = (...args) => {
   add(...args)
-  console.log(args)
+  // @TODO
   return scene
 }
 
-console.log(debug)
-
 const pane = debug.addPane('physics')
+const parameters = {
+  draw: false,
+  collisionStart: '',
+}
+
 pane.addInput(parameters, 'draw').on('change', () => {
 
-  console.log(parameters.draw)
+})
+
+const collisionFolder = debug.addFolder(pane, 'collisions')
+
+collisionFolder.addMonitor(parameters, 'collisionStart', {
+  label: 'start',
+  bufferSize: 30,
+  lineCount: 10,
+  interval: 30,
 })
 
 const statsParams = {
@@ -38,6 +45,20 @@ debug.stats.addMonitor(statsParams, 'physics', {
   max: 60,
 });
 
-ammo.on('tick', ({ fps }) => {
-  statsParams.physics = fps
+ammo.on('tick', (data) => {
+  statsParams.physics = data.fps
+
+  if (data.collisionStart.length === 0) {
+    return
+  }
+
+  let output = ''
+  for (const [id, others] of data.collisionStart) {
+    if (output !== '') output = `${output} | `
+    output = `${output}${id}: [${others.join(',')}]`
+  }
+
+  if (output.trim() !== '') {
+    parameters.collisionStart = output
+  }
 })

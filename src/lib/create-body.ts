@@ -35,14 +35,12 @@ export const createBody = (ammo: AmmoLib, data: Body, inertia: boolean, flag?: F
     type: number
     trigger: boolean
     id: number
-    name: string
     linkedId?: number
   }
 
   rigidbody.type = data.type
   rigidbody.trigger = false
   rigidbody.id = data.id
-  rigidbody.name = data.name
   rigidbody.linkedId = data.linkedId
 
   rigidbody.setRestitution(restitution)
