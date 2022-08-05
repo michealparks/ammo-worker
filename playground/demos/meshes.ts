@@ -1,40 +1,29 @@
 import * as THREE from 'three'
-import { scene } from 'three-kit'
 import * as constants from '../constants'
 import { ammo } from '../../src/main'
 import { randomColor } from './lib/colors'
 import * as physics from '../../src/adapters/three'
+import { meshes, indexes, vertices } from './lib/meshes'
 
 const m4 = new THREE.Matrix4()
 const matrix = new THREE.Matrix4()
 
-const radius = 0.5
-const geometry = new THREE.IcosahedronGeometry(radius)
-const material = new THREE.MeshStandardMaterial()
-
-const mesh = new THREE.InstancedMesh(geometry, material, constants.NUM_MESHES)
-mesh.castShadow = true
-mesh.receiveShadow = true
-scene.add(mesh)
-
-m4.copy(mesh.matrixWorld).invert()
+m4.copy(meshes.matrixWorld).invert()
 
 const color = new THREE.Color()
-const vertices = new Float32Array(geometry.attributes.position.array)
-const indexes = mesh.geometry.index ? new Float32Array(mesh.geometry.index.array) : undefined
 
-const results = physics.gatherGeometries(mesh)
+const results = physics.gatherGeometries(meshes)
 
 for (let index = 0; index < constants.NUM_MESHES; index += 1) {
   color.set(randomColor())
-  mesh.setColorAt(index, color)
+  meshes.setColorAt(index, color)
   matrix.setPosition(Math.random(), 1 + index, Math.random())
-  mesh.setMatrixAt(index, matrix)
+  meshes.setMatrixAt(index, matrix)
 }
 
-mesh.instanceColor!.needsUpdate = true
+meshes.instanceColor!.needsUpdate = true
 
-physics.addInstancedMesh(mesh, {
+physics.addInstancedMesh(meshes, {
   type: ammo.BODYTYPE_DYNAMIC,
   shape: ammo.BODYSHAPE_MESH,
   matrix: new Float32Array(m4.elements),

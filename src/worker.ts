@@ -234,12 +234,11 @@ const raycast = (start: Vector3, end: Vector3) => {
   const hits = []
   if (rayCallback.hasHit()) {
     const object = rayCallback.m_collisionObject
-    // const ud0 = ammo.castObject(object.getUserPointer(), Ammo.btVector3).userData
-
-    const point = rayCallback.get_m_hitPointWorld()
+    const body = ammo.castObject(object, ammo.btRigidBody)
+    const point = rayCallback.m_hitPointWorld // .get_m_hitPointWorld()
 
     hits.push({
-      id: object.id,
+      id: body.id,
       // name: ud0.name,
       position: [point.x(), point.y(), point.z()]
     })

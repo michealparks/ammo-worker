@@ -9,7 +9,6 @@ import * as constants from './constants'
 import { floor, floorSize, floorHeight } from './demos/lib/floor'
 
 const demos = import.meta.glob('./demos/*.ts')
-console.log(demos)
 
 const main = async () => {
   await ammo.init()
