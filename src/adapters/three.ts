@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import * as constants from '../constants'
 import { ammo } from '../main'
-import { Body } from '../types'
+import type { Body } from '../types'
 
 export { gatherGeometries } from './gather-geometries'
 
