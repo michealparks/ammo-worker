@@ -1,39 +1,28 @@
 import * as THREE from 'three'
-import { scene } from 'three-kit'
 import * as constants from '../constants'
 import { ammo } from '../../src/main'
-import { randomColor } from '../lib/colors'
+import { randomColor } from './lib/colors'
 import * as physics from '../../src/adapters/three'
+import { boxes, halfExtents } from './lib/boxes'
 
-export const init = () => {
-  const size = 1
-  const halfExtents = size / 2
-  const geometry = new THREE.BoxGeometry(size, size, size)
-  const material = new THREE.MeshStandardMaterial()
-  const mesh = new THREE.InstancedMesh(geometry, material, constants.NUM_MESHES)
-  mesh.castShadow = true
-  mesh.receiveShadow = true
-  scene.add(mesh)
+const color = new THREE.Color()
+const matrix = new THREE.Matrix4()
 
-  const color = new THREE.Color()
-  const matrix = new THREE.Matrix4()
-
-  for (let index = 0; index < constants.NUM_MESHES; index += 1) {
-    color.set(randomColor())
-    mesh.setColorAt(index, color)
-    matrix.setPosition(Math.random(), 1 + index, Math.random())
-    mesh.setMatrixAt(index, matrix)
-  }
-
-  mesh.instanceColor!.needsUpdate = true
-
-  physics.addInstancedMesh(mesh, {
-    shape: ammo.BODYSHAPE_BOX,
-    type: ammo.BODYTYPE_DYNAMIC,
-    halfExtents: {
-      x: halfExtents,
-      y: halfExtents,
-      z: halfExtents,
-    },
-  })
+for (let index = 0; index < constants.NUM_MESHES; index += 1) {
+  color.set(randomColor())
+  boxes.setColorAt(index, color)
+  matrix.setPosition(Math.random(), 1 + index, Math.random())
+  boxes.setMatrixAt(index, matrix)
 }
+
+boxes.instanceColor!.needsUpdate = true
+
+physics.addInstancedMesh(boxes, {
+  shape: ammo.BODYSHAPE_BOX,
+  type: ammo.BODYTYPE_DYNAMIC,
+  halfExtents: {
+    x: halfExtents,
+    y: halfExtents,
+    z: halfExtents,
+  },
+})

@@ -1,37 +1,18 @@
 import './index.css'
-import { scene, setAnimationLoop } from 'three-kit'
+import { setAnimationLoop } from 'three-kit'
 import * as debug from 'three-kit/debug'
 import './renderer'
-import * as THREE from 'three'
+import './lib/pane'
 import { ammo } from '../src/main'
 import * as physics from '../src/adapters/three'
 import * as constants from './constants'
-import * as boxes from './demos/boxes'
-import * as capsules from './demos/capsules'
-import * as meshes from './demos/meshes'
-import * as spheres from './demos/spheres'
-import * as translation from './demos/translation'
+import { floor, floorSize, floorHeight } from './demos/lib/floor'
 
-const demos = {
-  boxes,
-  capsules,
-  meshes,
-  spheres,
-  translation,
-}
+const demos = import.meta.glob('./demos/*.ts')
+console.log(demos)
 
 const main = async () => {
   await ammo.init()
-
-  // Add floor
-  const floorSize = 20
-  const floorHeight = 0.3
-  const geometry = new THREE.BoxBufferGeometry(floorSize, floorHeight, floorSize, 1, 1)
-  const material = new THREE.MeshStandardMaterial({ color: 0xCCCCCC })
-  const floor = new THREE.Mesh(geometry, material)
-  floor.name = 'floor'
-  floor.receiveShadow = true
-  scene.add(floor)
 
   physics.addMesh(floor, {
     type: ammo.BODYTYPE_STATIC,
@@ -44,7 +25,8 @@ const main = async () => {
   })
 
   // Create demo
-  const demo = demos[window.localStorage.getItem('demo') || 'boxes'].init() ?? {}
+  const savedDemo = window.localStorage.getItem('demo') || 'boxes'
+  const demoModule = await demos[`./demos/${savedDemo}.ts`]()
 
   // Add event for random impulses
   document.addEventListener('keydown', (event) => {
@@ -123,31 +105,10 @@ const main = async () => {
 
   setAnimationLoop(() => {
     debug.update()
-    demo.update?.()
+    demoModule.update?.()
   })
 
   import('../src/debug')
 }
 
 main()
-
-{
-  const parameters = {
-    demo: localStorage.getItem('demo') ?? 'boxes'
-  }
-  const pane = debug.addPane('demos')
-
-  pane.addInput(parameters, 'demo', {
-    options: {
-      boxes: 'boxes',
-      capsules: 'capsules',
-      meshes: 'meshes',
-      spheres: 'spheres',
-      translation: 'translation',
-      raycast: 'raycast',
-    },
-  }).on('change', () => {
-    window.localStorage.setItem('demo', parameters.demo)
-    window.location.reload()
-  })
-}

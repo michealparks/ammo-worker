@@ -12,7 +12,7 @@ export const createBody = (ammo: AmmoLib, data: Body, inertia: boolean, flag?: F
   const {
     id,
     type,
-    mass = type === constants.BODYTYPE_STATIC ? 0 : MASS,
+    mass = type === constants.BODYTYPE_DYNAMIC ? MASS : 0,
     linearDamping = LINEAR_DAMPING,
     angularDamping = ANGULAR_DAMPING,
     restitution = RESTITUION,
