@@ -31,12 +31,6 @@ export const init = async () => {
   await physics.addInstancedMesh(mesh, {
     type: ammo.BODYTYPE_DYNAMIC,
     shape: ammo.BODYSHAPE_SPHERE,
-    mass: 1,
-    restitution: 0.5,
-    friction: 0.5,
-    linearDamping: 0.1,
-    angularDamping: 0.1,
-    linkedId: -1,
     radius,
   })
 }

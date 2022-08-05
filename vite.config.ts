@@ -1,11 +1,7 @@
 import path from 'node:path' 
 import { defineConfig } from 'vite'
-import { svelte } from '@sveltejs/vite-plugin-svelte'
 
 export default defineConfig({
-  plugins: [
-    svelte(),
-  ],
   build: {
     rollupOptions: {
       input: {
@@ -16,5 +12,5 @@ export default defineConfig({
       },
     }
   },
-  envPrefix: 'THREE_',
+  envPrefix: ['THREE', 'AMMO'],
 })

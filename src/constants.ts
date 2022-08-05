@@ -1,9 +1,10 @@
-export const MAX_BODIES = 1000
 export const MAX_SUBSTEPS = 40
 export const FIXED_TIMESTEP = 1 / 60
 
 export const GRAVITY_DEFAULT = -9.8
 export const MARGIN_DEFAULT = 0.05
+
+export const ENTITY_ANY = -1
 
 // Rigid body is simulated according to applied forces.
 export const BODYTYPE_DYNAMIC = 0
@@ -13,6 +14,10 @@ export const BODYTYPE_STATIC = 1
 
 // Rigid body has infinite mass and does not respond to forces but can still be moved by setting their velocity or position.
 export const BODYTYPE_KINEMATIC = 2
+
+export const AXIS_X = 0
+export const AXIS_Y = 1
+export const AXIS_Z = 2
 
 // Collision shapes
 export const BODYSHAPE_BOX = 0

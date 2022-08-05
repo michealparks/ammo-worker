@@ -29,7 +29,11 @@ export type Flag =
   | typeof constants.BODYFLAG_NORESPONSE_OBJECT
   | typeof constants.BODYFLAG_STATIC_OBJECT
 
-export type Axis = 'x' | 'y' | 'z'
+export type Axis = 
+  | typeof constants.AXIS_X
+  | typeof constants.AXIS_Y
+  | typeof constants.AXIS_Z
+
 export interface Vector3 {
   x: number
   y: number
@@ -46,8 +50,7 @@ export interface RigidBody {
   linearDamping?: number
   angularDamping?: number
   linkedId?: number
-  transform: Float32Array
-  sprite?: boolean
+  transform?: Float32Array
   margin?: number
   scale?: Vector3
 }
@@ -93,7 +96,7 @@ export interface MeshRigidBody extends RigidBody {
   shape: typeof constants.BODYSHAPE_MESH
   vertices: Float32Array
   indexes?: Float32Array
-  matrix: number[]
+  matrix: Float32Array
 }
 
 export interface SphereRigidBody extends RigidBody {
@@ -125,12 +128,12 @@ export interface BoxTriggerVolume extends TriggerVolume {
 export type Volume =
   | BoxTriggerVolume
 
-export interface Terrain {
-  width: number
-  depth: number
-  minHeight: number
-  maxHeight: number
-  widthExtents: number
-  depthExtents: number
-  heightData: number[]
-}
+// export interface Terrain {
+//   width: number
+//   depth: number
+//   minHeight: number
+//   maxHeight: number
+//   widthExtents: number
+//   depthExtents: number
+//   heightData: Float32Array
+// }

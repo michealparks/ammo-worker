@@ -7,7 +7,7 @@ export { computeShape } from './lib/compute-shape'
 const events = new Map()
 
 const worker = new Worker(
-  new URL(import.meta.env.THREE_AMMO_WORKER_PATH, import.meta.url),
+  new URL(import.meta.env.AMMO_WORKER_PATH, import.meta.url),
   { type: 'module' }
 )
 

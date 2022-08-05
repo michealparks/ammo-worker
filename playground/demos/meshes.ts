@@ -5,7 +5,7 @@ import { ammo } from '../../src/main'
 import { randomColor } from '../lib/colors'
 import * as physics from '../../src/adapters/three'
 
-export const init = async () => {
+export const init = () => {
   const m4 = new THREE.Matrix4()
   const matrix = new THREE.Matrix4()
 
@@ -35,16 +35,11 @@ export const init = async () => {
 
   mesh.instanceColor!.needsUpdate = true
 
-  await physics.addInstancedMesh(mesh, {
+  physics.addInstancedMesh(mesh, {
     type: ammo.BODYTYPE_DYNAMIC,
     shape: ammo.BODYSHAPE_MESH,
-    restitution: 0.5,
-    friction: 0.5,
-    linearDamping: 0.1,
-    angularDamping: 0.1,
-    linkedId: -1,
+    matrix: new Float32Array(m4.elements),
     vertices,
     indexes,
-    matrix: m4.elements,
   })
 }

@@ -4,21 +4,17 @@ import { createShape } from './create-shape'
 import * as constants from '../constants'
 
 export const createTrigger = (ammo: AmmoLib, data: Body) => {
+  const transform = data.transform!
   const shape = createShape(ammo, data)
   shape.setMargin(MARGIN_DEFAULT)
 
-  const vec = new ammo.btVector3()
-  const quat = new ammo.btQuaternion(0, 0, 0, 0)
-  const transform = new ammo.btTransform()
+  const vec = new ammo.btVector3(transform[0], transform[1], transform[2])
+  const quat = new ammo.btQuaternion(transform[3], transform[4], transform[5], transform[6])
+  const bodyTransform = new ammo.btTransform()
+  bodyTransform.setOrigin(vec)
+  bodyTransform.setRotation(quat)
 
-
-  const { transform: bodyTransform } = data
-  vec.setValue(bodyTransform[0], bodyTransform[1], bodyTransform[2])
-  quat.setValue(bodyTransform[3], bodyTransform[4], bodyTransform[5], bodyTransform[6])
-  transform.setOrigin(vec)
-  transform.setRotation(quat)
-
-  const motionState = new ammo.btDefaultMotionState(transform)
+  const motionState = new ammo.btDefaultMotionState(bodyTransform)
   const bodyInfo = new ammo.btRigidBodyConstructionInfo(1, motionState, shape)
   const trigger = new ammo.btRigidBody(bodyInfo) as Ammo.btRigidBody & {
     type: number
@@ -49,7 +45,7 @@ export const createTrigger = (ammo: AmmoLib, data: Body) => {
 
   ammo.destroy(vec)
   ammo.destroy(quat)
-  ammo.destroy(transform)
+  ammo.destroy(bodyTransform)
   ammo.destroy(bodyInfo)
 
   return trigger

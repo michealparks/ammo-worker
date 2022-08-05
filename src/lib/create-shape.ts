@@ -15,7 +15,6 @@ interface ShapeHelpers {
   resources?: Ammo.Type[]
   heightfieldData?: number
 }
-  
 
 export const createShape = (ammo: types.AmmoLib, body: types.RigidBody) => {
   let shape: CollisionShape & ShapeHelpers
@@ -62,12 +61,12 @@ const createBoxShape = (ammo: types.AmmoLib, { halfExtents }: types.BoxRigidBody
 const createCapsuleShape = (ammo: types.AmmoLib, body: types.CapsuleRigidBody) => {
   const { x, y, z } = body.halfExtents
 
-  switch (body.cylinderAxis ?? 'y') {
-    case 'y':
+  switch (body.cylinderAxis ?? constants.AXIS_Y) {
+    case constants.AXIS_Y:
       return new ammo.btCapsuleShape(Math.max(x, z), y * 2)
-    case 'x':
+    case constants.AXIS_X:
       return new ammo.btCapsuleShapeX(Math.max(y, z), x * 2)
-    case 'z':
+    case constants.AXIS_Z:
       return new ammo.btCapsuleShapeZ(Math.max(x, y), z * 2)
   }
 }
@@ -75,12 +74,12 @@ const createCapsuleShape = (ammo: types.AmmoLib, body: types.CapsuleRigidBody) =
 const createConeShape = (ammo: types.AmmoLib, body: types.ConeRigidBody) => {
   const { x, y, z } = body.halfExtents
 
-  switch (body.cylinderAxis ?? 'y') {
-    case 'y':
+  switch (body.cylinderAxis ?? constants.AXIS_Y) {
+    case constants.AXIS_Y:
       return new ammo.btConeShape(Math.max(x, z), y * 2)
-    case 'x':
+    case constants.AXIS_X:
       return new ammo.btConeShapeX(Math.max(y, z), x * 2)
-    case 'z':
+    case constants.AXIS_Z:
       return new ammo.btConeShapeZ(Math.max(x, y), z * 2)
   }
 }
@@ -91,14 +90,14 @@ const createCylinderShape = (ammo: types.AmmoLib, body: types.CylinderRigidBody)
   
   let collisionShape: Ammo.btCylinderShape
 
-  switch (body.cylinderAxis ?? 'y') {
-    case 'y':
+  switch (body.cylinderAxis ?? constants.AXIS_Y) {
+    case constants.AXIS_Y:
       collisionShape = new Ammo.btCylinderShape(vec)
       break
-    case 'x':
+    case constants.AXIS_X:
       collisionShape = new Ammo.btCylinderShapeX(vec)
       break
-    case 'z':
+    case constants.AXIS_Z:
       collisionShape = new Ammo.btCylinderShapeZ(vec)
       break
   }
@@ -146,7 +145,9 @@ const createHeightfieldTerrainShape = (ammo: types.AmmoLib, body: types.Heightfi
     upAxis,
     hdt,
     flipQuadEdges
-  )
+  ) as Ammo.btHeightfieldTerrainShape & {
+    heightfieldData: Float32Array[]
+  }
 
   const scale = new ammo.btVector3(heightfieldDistance, 1, heightfieldDistance)
   collisionShape.setLocalScaling(scale)
@@ -183,11 +184,15 @@ const createMeshShape = (ammo: types.AmmoLib, body: types.MeshRigidBody) => {
     }
   }
 
-  const useQuantizedAabbCompression = true
-  const buildBvh = true
-  const shape = new ammo.btBvhTriangleMeshShape(triangleMesh, useQuantizedAabbCompression, buildBvh) as Ammo.btBvhTriangleMeshShape & {
-    resources: Ammo.Type[]
-  }
+  const calcAABB = true
+  const shape = new ammo.btConvexTriangleMeshShape(triangleMesh, calcAABB)
+
+  // I do not know why this doesn't work...
+  // const useQuantizedAabbCompression = true
+  // const buildBvh = true
+  // const shape = new ammo.btBvhTriangleMeshShape(triangleMesh, useQuantizedAabbCompression, buildBvh) as Ammo.btBvhTriangleMeshShape & {
+  //   resources: Ammo.Type[]
+  // }
 
   shape.resources = [triangleMesh]
 

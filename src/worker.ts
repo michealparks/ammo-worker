@@ -1,7 +1,7 @@
 import AmmoModule from './ammo'
 import * as Comlink from 'comlink'
 import * as constants from './constants'
-import type { AmmoLib, Flag, Body, TriggerVolume } from './types'
+import type { AmmoLib, Flag, Body, TriggerVolume, Vector3 } from './types'
 import { createBody } from './lib/create-body'
 import { createTrigger } from './lib/create-trigger'
 import { checkForCollisions, cleanOldCollisions } from './lib/collisions'
@@ -28,7 +28,7 @@ const dynamicBodies = new Set<Ammo.btRigidBody>()
 const init = async () => {
   ammo = await AmmoModule({
     locateFile() {
-      return import.meta.env.THREE_AMMO_WASM_PATH
+      return import.meta.env.AMMO_WASM_PATH
     }
   })
   vec = new ammo.btVector3()
@@ -46,6 +46,7 @@ const init = async () => {
 
   world = new ammo.btDiscreteDynamicsWorld(
     dispatcher,
+    // @ts-ignore WTF?
     pairCache,
     solver,
     collisionConfiguration
@@ -144,7 +145,7 @@ const pause = () => {
   clearInterval(tickId)
 }
 
-let transforms = new Float32Array(1000 * 7)
+let transforms = new Float32Array(Number.parseInt(import.meta.env.AMMO_MAX_BODIES, 10) * 7)
 
 const tick = () => {
   now = performance.now()
@@ -218,7 +219,7 @@ const applyCentralForces = (ids: Uint16Array, impulses: Float32Array) => {
   }
 }
 
-const raycast = (start, end) => {
+const raycast = (start: Vector3, end: Vector3) => {
   const ray = ammo.castObject(rayCallback, ammo.RayResultCallback)
   ray.set_m_closestHitFraction(1)
   ray.set_m_collisionObject(null)

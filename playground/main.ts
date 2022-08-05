@@ -1,15 +1,11 @@
 import './index.css'
 import { scene, setAnimationLoop } from 'three-kit'
 import * as debug from 'three-kit/debug'
-
 import './renderer'
-import App from './App.svelte'
 import * as THREE from 'three'
-
 import { ammo } from '../src/main'
 import * as physics from '../src/adapters/three'
 import * as constants from './constants'
-import { Volume } from '../src/types'
 import * as boxes from './demos/boxes'
 import * as capsules from './demos/capsules'
 import * as meshes from './demos/meshes'
@@ -37,7 +33,7 @@ const main = async () => {
   floor.receiveShadow = true
   scene.add(floor)
 
-  await physics.addMesh(floor, {
+  physics.addMesh(floor, {
     type: ammo.BODYTYPE_STATIC,
     shape: ammo.BODYSHAPE_BOX,
     halfExtents: {
@@ -48,22 +44,22 @@ const main = async () => {
   })
 
   // Create demo
-  const demo = await demos[window.localStorage.getItem('demo') || 'boxes'].init() ?? {}
+  const demo = demos[window.localStorage.getItem('demo') || 'boxes'].init() ?? {}
 
   // Add event for random impulses
   document.addEventListener('keydown', (event) => {
     switch (event.key.toLowerCase()) {
     case 'i':
       const count = physics.id
-      const M = 20
+      const magnitude = 20
       const ids = new Uint16Array(constants.NUM_MESHES)
       const impulses = new Float32Array(constants.NUM_MESHES * 3)
 
       for (let i = 0, j = 0; i < count; i += 1, j += 3) {
         ids[i] = i
-        impulses[j + 0] = (Math.random() - 0.5) * M
-        impulses[j + 1] = (Math.random() - 0.5) * M
-        impulses[j + 2] = (Math.random() - 0.5) * M
+        impulses[j + 0] = (Math.random() - 0.5) * magnitude
+        impulses[j + 1] = (Math.random() - 0.5) * magnitude
+        impulses[j + 2] = (Math.random() - 0.5) * magnitude
       }
 
       ammo.applyCentralImpulses(ids, impulses)
@@ -107,7 +103,7 @@ const main = async () => {
     }
   })
 
-  await ammo.createTriggers([
+  ammo.createTriggers([
     {
       id: -2,
       shape: ammo.BODYSHAPE_BOX,
@@ -123,7 +119,7 @@ const main = async () => {
     }
   ])
 
-  await ammo.run()
+  ammo.run()
 
   setAnimationLoop(() => {
     debug.update()
@@ -135,6 +131,23 @@ const main = async () => {
 
 main()
 
-export default new App({
-  target: document.querySelector('#app')
-})
+{
+  const parameters = {
+    demo: localStorage.getItem('demo') ?? 'boxes'
+  }
+  const pane = debug.addPane('demos')
+
+  pane.addInput(parameters, 'demo', {
+    options: {
+      boxes: 'boxes',
+      capsules: 'capsules',
+      meshes: 'meshes',
+      spheres: 'spheres',
+      translation: 'translation',
+      raycast: 'raycast',
+    },
+  }).on('change', () => {
+    window.localStorage.setItem('demo', parameters.demo)
+    window.location.reload()
+  })
+}

@@ -1,15 +1,35 @@
 import type { AmmoLib, Flag, Body } from '../types'
 import { createShape } from './create-shape'
+import * as constants from '../constants'
+
+const MASS = Number.parseFloat(import.meta.env.AMMO_DEFAULT_MASS)
+const LINEAR_DAMPING = Number.parseFloat(import.meta.env.AMMO_DEFAULT_LINEAR_DAMPING)
+const ANGULAR_DAMPING = Number.parseFloat(import.meta.env.AMMO_DEFAULT_ANGULAR_DAMPING)
+const RESTITUION = Number.parseFloat(import.meta.env.AMMO_DEFAULT_RESTITUTION)
+const FRICTION = Number.parseFloat(import.meta.env.AMMO_DEFAULT_FRICTION)
 
 export const createBody = (ammo: AmmoLib, data: Body, inertia: boolean, flag?: Flag) => {
   const {
-    mass = 1,
-    linearDamping = 0.01,
-    angularDamping = 0.01,
-    restitution = 0.5,
-    friction = 0.5,
-    transform: bodyTransform,
+    id,
+    type,
+    mass = type === constants.BODYTYPE_STATIC ? 0 : MASS,
+    linearDamping = LINEAR_DAMPING,
+    angularDamping = ANGULAR_DAMPING,
+    restitution = RESTITUION,
+    friction = FRICTION,
   } = data
+
+  const transform = data.transform!
+
+  if (import.meta.env.AMMO_DEBUG === 'true') {
+    if (type === constants.BODYTYPE_DYNAMIC && mass === 0) {
+      throw new Error(`Dynamic body #${id} has a mass of 0!`)
+    }
+
+    if (transform[3] === 0 && transform[4] === 0 && transform[5] === 0 && transform[6] === 0) {
+      throw new Error(`Body #${id} has a quaternion with value (0, 0, 0, 0)!`)
+    }
+  }
 
   let localInertia: Ammo.btVector3 | undefined
 
@@ -20,28 +40,25 @@ export const createBody = (ammo: AmmoLib, data: Body, inertia: boolean, flag?: F
     shape.calculateLocalInertia(mass, localInertia)
   }
 
-  const vec = new ammo.btVector3()
-  const quat = new ammo.btQuaternion(0, 0, 0, 0)
-  const transform = new ammo.btTransform()
+  const vec = new ammo.btVector3(transform[0], transform[1], transform[2])
+  const quat = new ammo.btQuaternion(transform[3], transform[4], transform[5], transform[6])
+  const bodyTransform = new ammo.btTransform()
+  bodyTransform.setOrigin(vec)
+  bodyTransform.setRotation(quat)
 
-  vec.setValue(bodyTransform[0], bodyTransform[1], bodyTransform[2])
-  quat.setValue(bodyTransform[3], bodyTransform[4], bodyTransform[5], bodyTransform[6])
-  transform.setOrigin(vec)
-  transform.setRotation(quat)
-
-  const motionState = new ammo.btDefaultMotionState(transform)
+  const motionState = new ammo.btDefaultMotionState(bodyTransform)
   const bodyInfo = new ammo.btRigidBodyConstructionInfo(mass, motionState, shape, localInertia)
   const rigidbody = new ammo.btRigidBody(bodyInfo) as Ammo.btRigidBody & {
     type: number
     trigger: boolean
     id: number
-    linkedId?: number
+    linkedId: number
   }
 
-  rigidbody.type = data.type
+  rigidbody.type = type
   rigidbody.trigger = false
   rigidbody.id = data.id
-  rigidbody.linkedId = data.linkedId
+  rigidbody.linkedId = data.linkedId ?? -1
 
   rigidbody.setRestitution(restitution)
   rigidbody.setFriction(friction)
@@ -53,7 +70,7 @@ export const createBody = (ammo: AmmoLib, data: Body, inertia: boolean, flag?: F
 
   ammo.destroy(vec)
   ammo.destroy(quat)
-  ammo.destroy(transform)
+  ammo.destroy(bodyTransform)
   ammo.destroy(bodyInfo)
   
   if (localInertia !== undefined) {

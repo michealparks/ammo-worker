@@ -2,6 +2,7 @@
 import { Vector3, Matrix4, Box3 } from 'three'
 import * as types from '../types'
 import * as constants from '../constants'
+import type { Axis } from '../types'
 
 export const HEIGHTFIELD_DATA_TYPE = {
   short: 'short',
@@ -26,7 +27,7 @@ export interface BoxOptions extends Options {
 }
 
 export interface CylinderOptions extends BoxOptions {
-  cylinderAxis?: 'x' | 'y' | 'z'
+  cylinderAxis?: Axis
 }
 
 export const computeShape = (
@@ -120,7 +121,7 @@ export const computeTriMeshShape = (
     }
   }
 
-  return output
+  return new Float32Array(output)
 }
 
 // returns the bounding box for the geometries underneath `root`.

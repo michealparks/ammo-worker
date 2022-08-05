@@ -3,10 +3,11 @@ import * as constants from '../constants'
 import { ammo } from '../main'
 import { Body } from '../types'
 
+export { gatherGeometries } from './gather-geometries'
+
 const vec3 = new THREE.Vector3
 const quat = new THREE.Quaternion()
 const scale = new THREE.Vector3()
-const inverse = new THREE.Matrix4()
 const matrix = new THREE.Matrix4()
 
 export const dynamicBodyMeshes = new Set<THREE.Mesh | THREE.InstancedMesh>()
@@ -41,7 +42,7 @@ const createTransformFromInstancedMesh = (mesh: THREE.InstancedMesh, index: numb
   return transform
 }
 
-export const addMesh = (mesh: THREE.Mesh, data: Body) => {
+export const addMesh = (mesh: THREE.Mesh, data: Partial<Body>) => {
   id += 1
 
   if (data.type === constants.BODYTYPE_DYNAMIC) {
@@ -52,12 +53,6 @@ export const addMesh = (mesh: THREE.Mesh, data: Body) => {
 
   const body = {
     id,
-    mass: 0,
-    restitution: 0.5,
-    friction: 1,
-    linearDamping: 0,
-    angularDamping: 0,
-    linkedId: -1,
     transform: createTransformFromMesh(mesh),
     ...data,
   }
@@ -67,7 +62,7 @@ export const addMesh = (mesh: THREE.Mesh, data: Body) => {
   return id
 }
 
-export const addInstancedMesh = (mesh: THREE.InstancedMesh, data: Body) => {
+export const addInstancedMesh = (mesh: THREE.InstancedMesh, data: Partial<Body>) => {
   dynamicBodyMeshes.add(mesh)
 
   const bodies: Body[] = []
@@ -95,45 +90,6 @@ export const computeScale = (matrixWorld: Float32Array) => {
   scale.setFromMatrixScale(matrix)
 
   return { x: scale.x, y: scale.y, z: scale.z }
-}
-
-export const gatherGeometries = (root: THREE.Object3D, options: {
-  includeInvisible?: boolean
-} = {}) => {
-  inverse.copy(root.matrixWorld).invert()
-  // const scale = new THREE.Vector3()
-  // scale.setFromMatrixScale(root.matrixWorld)
-
-  const geometries: Float32Array[] = []
-  const matrices: Float32Array[] = []
-
-  let indexes: (Float32Array | null)[] | undefined = []
-
-  root.traverse((object3d: THREE.Object3D) => {
-    const transform = new THREE.Matrix4()
-
-    if (
-      (object3d as THREE.Mesh).isMesh &&
-      object3d.name !== 'Sky' &&
-      (options.includeInvisible || object3d.visible)
-    ) {
-      const mesh = object3d as THREE.Mesh
-
-      if (mesh === root) {
-        transform.identity()
-      } else {
-        mesh.updateWorldMatrix(true, true)
-        transform.multiplyMatrices(inverse, mesh.matrixWorld)
-      }
-      // todo: might want to return null xform if this is the root so that callers can avoid multiplying
-      // things by the identity matrix
-      geometries.push(new Float32Array(mesh.geometry.attributes.position.array))
-      matrices.push(new Float32Array(transform.elements))
-      indexes!.push(mesh.geometry.index ? new Float32Array(mesh.geometry.index.array) : null)
-    }
-  })
-
-  return { geometries, matrices, indexes }
 }
 
 ammo.on('tick', (data) => {

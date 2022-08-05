@@ -5,8 +5,7 @@ import { ammo } from '../../src/main'
 import { randomColor } from '../lib/colors'
 import * as physics from '../../src/adapters/three'
 
-
-export const init = async () => {
+export const init = () => {
   const size = 1
   const halfExtents = size / 2
   const geometry = new THREE.BoxGeometry(size, size, size)
@@ -28,14 +27,9 @@ export const init = async () => {
 
   mesh.instanceColor!.needsUpdate = true
 
-  await physics.addInstancedMesh(mesh, {
+  physics.addInstancedMesh(mesh, {
     shape: ammo.BODYSHAPE_BOX,
     type: ammo.BODYTYPE_DYNAMIC,
-    restitution: 0.5,
-    friction: 0.5,
-    linearDamping: 0.1,
-    angularDamping: 0.1,
-    linkedId: -1,
     halfExtents: {
       x: halfExtents,
       y: halfExtents,
