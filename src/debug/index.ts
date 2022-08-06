@@ -20,6 +20,7 @@ const pane = debug.addPane('physics')
 const parameters = {
   draw: false,
   collisionStart: '',
+  triggerEnter: '',
 }
 
 pane.addInput(parameters, 'draw').on('change', () => {
@@ -29,7 +30,12 @@ pane.addInput(parameters, 'draw').on('change', () => {
 const collisionFolder = debug.addFolder(pane, 'collisions')
 
 collisionFolder.addMonitor(parameters, 'collisionStart', {
-  label: 'start',
+  bufferSize: 30,
+  lineCount: 10,
+  interval: 30,
+})
+
+collisionFolder.addMonitor(parameters, 'triggerEnter', {
   bufferSize: 30,
   lineCount: 10,
   interval: 30,
@@ -48,17 +54,27 @@ debug.stats.addMonitor(statsParams, 'physics', {
 ammo.on('tick', (data) => {
   statsParams.physics = data.fps
 
-  if (data.collisionStart.length === 0) {
-    return
-  }
-
   let output = ''
-  for (const [id, others] of data.collisionStart) {
-    if (output !== '') output = `${output} | `
-    output = `${output}${id}: [${others.join(',')}]`
+
+  if (data.collisionStart.length > 0) {
+    for (const [id, others] of data.collisionStart) {
+      if (output !== '') output = `${output} | `
+      output = `${output}${id}: [${others.join(',')}]`
+    }
+  
+    if (output.trim() !== '') {
+      parameters.collisionStart = output
+    }
   }
 
-  if (output.trim() !== '') {
-    parameters.collisionStart = output
+  if (data.triggerEnter.length > 0) {
+    for (const [id, others] of data.triggerEnter) {
+      if (output !== '') output = `${output} | `
+      output = `${output}${id}: [${others.join(',')}]`
+    }
+
+    if (output.trim() !== '') {
+      parameters.triggerEnter = output
+    }
   }
 })

@@ -211,7 +211,7 @@ const createMeshShape = (ammo: types.AmmoLib, body: types.MeshRigidBody) => {
 const finishCollisionShape = (ammo: types.AmmoLib, shape: CollisionShape & ShapeHelpers, body: types.RigidBody) => {
   shape.type = body.type
 
-  shape.setMargin(body.margin ?? constants.MARGIN_DEFAULT);
+  shape.setMargin(body.margin ?? constants.DEFAULT_MARGIN);
 
   shape.destroy = () => {
     if (shape.resources !== undefined) {

@@ -40,7 +40,11 @@ const registerEvent = (events: Map<number, any[]>, id: number, data: unknown) =>
   events.get(id)!.push(data)
 }
 
-export const checkForCollisions = (ammo: AmmoLib, world: Ammo.btDiscreteDynamicsWorld, globalEvents: any[]) => {
+export const checkForCollisions = (
+  ammo: AmmoLib,
+  world: Ammo.btDiscreteDynamicsWorld,
+  // globalEvents: any[]
+) => {
   triggerEnter.clear()
   collisionStart.clear()
   frameCollisions.clear()
@@ -69,37 +73,37 @@ export const checkForCollisions = (ammo: AmmoLib, world: Ammo.btDiscreteDynamics
     if (isTriggerBody0 || isTriggerBody1) {
       isNewCollision = storeCollision(body0, body1)
       if (isNewCollision && isTriggerBody1 === false) {
-        registerEvent(triggerEnter, body0.id, body1.id)
+        if (body0.reportTrigger) registerEvent(triggerEnter, body0.id, body1.id)
 
-        if ('enter' in body0 && (body1.id === body0.entity || body0.entity === constants.ENTITY_ANY)) {
-          globalEvents.push([body0.enter, body0.id, body1.id])
-        }
+        // if ('enter' in body0 && (body1.id === body0.entity || body0.entity === constants.ENTITY_ANY)) {
+        //   globalEvents.push([body0.enter, body0.id, body1.id])
+        // }
       }
 
       isNewCollision = storeCollision(body1, body0)
       if (isNewCollision && isTriggerBody0 === false) {
-        registerEvent(triggerEnter, body1.id, body0.id)
+        if (body1.reportTrigger) registerEvent(triggerEnter, body1.id, body0.id)
 
-        if ('enter' in body1 && (body0.id === body1.entity || body1.entity === constants.ENTITY_ANY)) {
-          globalEvents.push([body1.enter, body1.id, body0.id])
-        }
+        // if ('enter' in body1 && (body0.id === body1.entity || body1.entity === constants.ENTITY_ANY)) {
+        //   globalEvents.push([body1.enter, body1.id, body0.id])
+        // }
       }
     // Handle collisions
     } else {
       isNewCollision = storeCollision(body0, body1)
       if (isNewCollision) {
-        registerEvent(collisionStart, body0.id, body1.id)
+        if (body0.reportCollision) registerEvent(collisionStart, body0.id, body1.id)
       }
 
       isNewCollision = storeCollision(body1, body0)
       if (isNewCollision) {
-        registerEvent(collisionStart, body1.id, body0.id)
+        if (body1.reportCollision) registerEvent(collisionStart, body1.id, body0.id)
       }
     }
   }
 }
 
-export const cleanOldCollisions = (globalEvents: any[]) => {
+export const cleanOldCollisions = (/* globalEvents: any[] */) => {
   triggerLeave.clear()
   collisionEnd.clear()
 
@@ -112,13 +116,13 @@ export const cleanOldCollisions = (globalEvents: any[]) => {
         others.delete(otherid)
 
         if (body.trigger === true) {
-          registerEvent(triggerLeave, body.id, other.id)
+          if (body.reportTrigger) registerEvent(triggerLeave, body.id, other.id)
 
-          if (body.leave && (other.id === body.entity || body.entity === constants.ENTITY_ANY)) {
-            globalEvents.push([body.leave, body.id, other.id])
-          }
+          // if (body.leave && (other.id === body.entity || body.entity === constants.ENTITY_ANY)) {
+          //   globalEvents.push([body.leave, body.id, other.id])
+          // }
         } else if (other.trigger === false) {
-          registerEvent(collisionEnd, body.id, other.id)
+          if (body.reportCollision) registerEvent(collisionEnd, body.id, other.id)
         }
       }
     }

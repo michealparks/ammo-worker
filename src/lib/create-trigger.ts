@@ -1,4 +1,4 @@
-import { MARGIN_DEFAULT, BODYFLAG_NORESPONSE_OBJECT } from '../constants'
+import { DEFAULT_MARGIN, BODYFLAG_NORESPONSE_OBJECT } from '../constants'
 import { AmmoLib, Body } from '../types'
 import { createShape } from './create-shape'
 import * as constants from '../constants'
@@ -6,7 +6,7 @@ import * as constants from '../constants'
 export const createTrigger = (ammo: AmmoLib, data: Body) => {
   const transform = data.transform!
   const shape = createShape(ammo, data)
-  shape.setMargin(MARGIN_DEFAULT)
+  shape.setMargin(DEFAULT_MARGIN)
 
   const vec = new ammo.btVector3(transform[0], transform[1], transform[2])
   const quat = new ammo.btQuaternion(transform[3], transform[4], transform[5], transform[6])
@@ -24,6 +24,7 @@ export const createTrigger = (ammo: AmmoLib, data: Body) => {
     leave: string
     entity: number
     linkedId?: number
+    reportTrigger?: boolean
   }
 
   trigger.type = constants.BODYTYPE_STATIC
@@ -33,6 +34,7 @@ export const createTrigger = (ammo: AmmoLib, data: Body) => {
   trigger.leave = data.leave
   trigger.entity = data.entity
   trigger.linkedId = data.linkedId
+  trigger.reportTrigger = true
 
   trigger.setRestitution(0)
   trigger.setFriction(0)

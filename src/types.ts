@@ -53,6 +53,8 @@ export interface RigidBody {
   transform?: Float32Array
   margin?: number
   scale?: Vector3
+  reportCollision?: boolean
+  reportTrigger?: boolean
 }
 
 export interface BoxLikeRigidBody extends RigidBody {
@@ -119,6 +121,7 @@ export interface TriggerVolume {
   linkedRigidbodyId?: number
   transform: Float32Array
   halfExtents: Vector3
+  reportTrigger?: boolean
 }
 
 export interface BoxTriggerVolume extends TriggerVolume {

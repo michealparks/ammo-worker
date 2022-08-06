@@ -4,7 +4,9 @@ import * as constants from './constants'
 
 export { computeShape } from './lib/compute-shape'
 
-const events = new Map()
+type Callback = (data: any) => void
+
+const tickCallbacks = new Set<Callback>()
 
 const worker = new Worker(
   new URL(import.meta.env.AMMO_WORKER_PATH, import.meta.url),
@@ -19,14 +21,22 @@ worker.addEventListener('messageerror', (event) => {
   console.error('physics worker message error', event)
 })
 
-const api = Comlink.wrap<typeof API>(worker)
-
-export const on = (eventName: string, callback: (data: any) => void) => {
-  if (events.has(eventName) === false) {
-    events.set(eventName, new Set())
+worker.addEventListener('message', ({ data }) => {
+  if (data.id) {
+    return
   }
 
-  events.get(eventName).add(callback)
+  for (const callback of tickCallbacks) {
+    callback(data)
+  }
+})
+
+const api = Comlink.wrap<typeof API>(worker)
+
+export const on = (eventName: string, callback: Callback) => {
+  if (eventName === 'tick') {
+    tickCallbacks.add(callback)
+  }
 }
 
 const run = async () => {
@@ -39,16 +49,16 @@ const pause = async () => {
   ammo.running = false
 }
 
-worker.onmessage = ({ data }) => {
-  if (data.id) {
-    return
-  }
+const raycastData = new Float32Array(6)
 
-  if (events.has('tick') === false) return
-
-  for (const callback of events.get('tick')) {
-    callback(data)
-  }
+const raycast = (startX: number, startY: number, startZ: number, endX: number, endY: number, endZ: number) => {
+  raycastData[0] = startX
+  raycastData[1] = startY
+  raycastData[2] = startZ
+  raycastData[3] = endX
+  raycastData[4] = endY
+  raycastData[5] = endZ
+  return api.raycast(raycastData)
 }
 
 export const ammo = {
@@ -69,5 +79,5 @@ export const ammo = {
   applyCentralImpulses: api.applyCentralImpulses,
   applyCentralForce: api.applyCentralForce,
   applyCentralForces: api.applyCentralForces,
-  raycast: api.raycast,
+  raycast,
 }

@@ -60,7 +60,7 @@ export const createTerrainShape = (ammo: AmmoLib, terrain: Terrain) => {
   const scaleX = widthExtents / (width - 1)
   const scaleZ = depthExtents / (depth - 1)
   heightFieldShape.setLocalScaling(new ammo.btVector3(scaleX, 1, scaleZ))
-  heightFieldShape.setMargin(constants.MARGIN_DEFAULT)
+  heightFieldShape.setMargin(constants.DEFAULT_MARGIN)
 
   return heightFieldShape
 }

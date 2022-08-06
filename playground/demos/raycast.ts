@@ -66,16 +66,14 @@ let raycasting = false
 const raycast = async () => {
   raycasting = true
 
-  const hits = await ammo.raycast(
-    { x: player.position.x, y: player.position.y, z: player.position.z },
-    { x: player.position.x, y: player.position.y, z: 10 }
-  )
+  const { x, y, z } = player.position
+
+  const hits = await ammo.raycast(x, y, z, x, y, 10)
 
   if (hits.length > 0) {
     addImpulses(hits)
   }
 
-  console.log(hits)
   setTimeout(() => { raycasting = false }, 100)
 }
 

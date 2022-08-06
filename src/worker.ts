@@ -1,7 +1,7 @@
 import AmmoModule from './ammo'
 import * as Comlink from 'comlink'
 import * as constants from './constants'
-import type { AmmoLib, Flag, Body, TriggerVolume, Vector3 } from './types'
+import type { AmmoLib, Flag, Body, TriggerVolume } from './types'
 import { createBody } from './lib/create-body'
 import { createTrigger } from './lib/create-trigger'
 import { checkForCollisions, cleanOldCollisions } from './lib/collisions'
@@ -51,7 +51,7 @@ const init = async () => {
     solver,
     collisionConfiguration
   )
-  setGravity(0, constants.GRAVITY_DEFAULT, 0)
+  setGravity(0, Number.parseFloat(import.meta.env.AMMO_DEFAULT_GRAVITY), 0)
 }
 
 const setSimulationSpeed = (speed: number) => {
@@ -145,14 +145,16 @@ const pause = () => {
   clearInterval(tickId)
 }
 
-let transforms = new Float32Array(Number.parseInt(import.meta.env.AMMO_MAX_BODIES, 10) * 7)
+const transforms = new Float32Array(Number.parseInt(import.meta.env.AMMO_MAX_BODIES, 10) * 7)
+const maxSubsteps = Number.parseInt(import.meta.env.AMMO_MAX_SUBSTEPS, 10)
+const fixedTimestep = Number.parseFloat(import.meta.env.AMMO_FIXED_TIMESTEP)
 
 const tick = () => {
   now = performance.now()
   dt = (now - then) / 1000
   then = now
 
-  world.stepSimulation(dt, constants.MAX_SUBSTEPS, constants.FIXED_TIMESTEP)
+  world.stepSimulation(dt, maxSubsteps, fixedTimestep)
 
   let index = 0
   let shift = 0
@@ -181,15 +183,15 @@ const tick = () => {
     index += 1
   }
 
-  const globalEvents: any[] = []
-  checkForCollisions(ammo, world, globalEvents)
-  const data = cleanOldCollisions(globalEvents)
+  // const globalEvents: any[] = []
+  checkForCollisions(ammo, world, /* globalEvents */)
+  const data = cleanOldCollisions(/*globalEvents */)
 
   postMessage({
     ...data,
     fps: 1000 / (dt * 1000),
     transforms,
-    globalEvents
+    // globalEvents
   })
 }
 
@@ -219,15 +221,15 @@ const applyCentralForces = (ids: Uint16Array, impulses: Float32Array) => {
   }
 }
 
-const raycast = (start: Vector3, end: Vector3) => {
+const raycast = (data: Float32Array) => {
   const ray = ammo.castObject(rayCallback, ammo.RayResultCallback)
   ray.set_m_closestHitFraction(1)
   ray.set_m_collisionObject(null)
 
-  rayOrigin.setValue(start.x, start.y, start.z)
-  rayDestination.setValue(end.x, end.y, end.z)
-  rayCallback.get_m_rayFromWorld().setValue(start.x, start.y, start.z)
-  rayCallback.get_m_rayToWorld().setValue(end.x, end.y, end.z)
+  rayOrigin.setValue(data[0], data[1], data[2])
+  rayDestination.setValue(data[3], data[4], data[5])
+  rayCallback.get_m_rayFromWorld().setValue(data[0], data[1], data[2])
+  rayCallback.get_m_rayToWorld().setValue(data[3], data[4], data[5])
 
   world.rayTest(rayOrigin, rayDestination, rayCallback)
 

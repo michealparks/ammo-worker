@@ -53,12 +53,16 @@ export const createBody = (ammo: AmmoLib, data: Body, inertia: boolean, flag?: F
     trigger: boolean
     id: number
     linkedId: number
+    reportCollision: boolean
+    reportTrigger: boolean
   }
 
   rigidbody.type = type
   rigidbody.trigger = false
   rigidbody.id = data.id
   rigidbody.linkedId = data.linkedId ?? -1
+  rigidbody.reportCollision = data.reportCollision ?? false
+  rigidbody.reportTrigger = data.reportTrigger ?? true
 
   rigidbody.setRestitution(restitution)
   rigidbody.setFriction(friction)

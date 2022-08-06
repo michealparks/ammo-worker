@@ -13,4 +13,10 @@ export default defineConfig({
     }
   },
   envPrefix: ['THREE', 'AMMO'],
+  server: {
+    headers: {
+      'Cross-Origin-Opener-Policy': 'same-origin',
+      'Cross-Origin-Embedder-Policy': 'require-corp',
+    }
+  }
 })

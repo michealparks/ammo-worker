@@ -1,8 +1,4 @@
-export const MAX_SUBSTEPS = 40
-export const FIXED_TIMESTEP = 1 / 60
-
-export const GRAVITY_DEFAULT = -9.8
-export const MARGIN_DEFAULT = 0.05
+export const DEFAULT_MARGIN = Number.parseFloat(import.meta.env.AMMO_DEFAULT_MARGIN)
 
 export const ENTITY_ANY = -1
 
