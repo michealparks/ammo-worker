@@ -11,6 +11,14 @@ const worker = new Worker(
   { type: 'module' }
 )
 
+worker.addEventListener('error', (event) => {
+  console.error('physics worker error:', event)
+})
+
+worker.addEventListener('messageerror', (event) => {
+  console.error('physics worker message error', event)
+})
+
 const api = Comlink.wrap<typeof API>(worker)
 
 export const on = (eventName: string, callback: (data: any) => void) => {
