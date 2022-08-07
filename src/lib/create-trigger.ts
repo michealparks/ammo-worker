@@ -1,5 +1,5 @@
 import { DEFAULT_MARGIN, BODYFLAG_NORESPONSE_OBJECT } from '../constants'
-import { AmmoLib, Body } from '../types'
+import type { AmmoLib, Body } from '../types'
 import { createShape } from './create-shape'
 import * as constants from '../constants'
 
