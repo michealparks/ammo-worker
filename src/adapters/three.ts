@@ -12,6 +12,7 @@ const matrix = new THREE.Matrix4()
 
 export const dynamicBodyMeshes = new Set<THREE.Mesh | THREE.InstancedMesh>()
 export const meshMap = new Map<number, THREE.Mesh>()
+export const idMap = new Map<number, number>()
 export const instancedMeshMap = new Map<number, { mesh: THREE.InstancedMesh, index: number }>()
 
 export let id = -1
@@ -42,24 +43,43 @@ const createTransformFromInstancedMesh = (mesh: THREE.InstancedMesh, index: numb
   return transform
 }
 
-export const addMesh = (mesh: THREE.Mesh, data: Partial<Body>) => {
+export const createBodyData = (mesh: THREE.Mesh, data: Partial<Body>) => {
   id += 1
 
   if (data.type === constants.BODYTYPE_DYNAMIC) {
     dynamicBodyMeshes.add(mesh)
   }
-  
+
+  idMap.set(mesh.id, id)
   meshMap.set(id, mesh)
 
-  const body = {
+  return {
     id,
     transform: createTransformFromMesh(mesh),
     ...data,
   }
+}
+
+export const addMesh = (mesh: THREE.Mesh, data: Partial<Body>) => {
+  const body = createBodyData(mesh, data)
 
   ammo.createRigidBodies([body])
 
-  return id
+  return body.id
+}
+
+export const addMeshes = (meshes: THREE.Mesh[], data: Partial<Body>) => {
+  const bodies = []
+  const ids = []
+  for (const mesh of meshes) {
+    const body = createBodyData(mesh, data)
+    bodies.push(body)
+    ids.push(body.id)
+  }
+
+  ammo.createRigidBodies(bodies)
+
+  return ids
 }
 
 export const addInstancedMesh = (mesh: THREE.InstancedMesh, data: Partial<Body>) => {
@@ -90,6 +110,10 @@ export const computeScale = (matrixWorld: Float32Array) => {
   scale.setFromMatrixScale(matrix)
 
   return { x: scale.x, y: scale.y, z: scale.z }
+}
+
+export const destroyAll = () => {
+
 }
 
 ammo.on('tick', (data) => {
