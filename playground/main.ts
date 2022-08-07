@@ -1,5 +1,5 @@
 import './index.css'
-import { setAnimationLoop } from 'three-kit'
+import { run, update } from 'three-kit'
 import * as debug from 'three-kit/debug'
 import './renderer'
 import './lib/pane'
@@ -102,10 +102,12 @@ const main = async () => {
 
   ammo.run()
 
-  setAnimationLoop(() => {
+  update(() => {
     debug.update()
     demoModule.update?.()
   })
+
+  run()
 
   import('../src/debug')
 }
