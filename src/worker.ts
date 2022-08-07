@@ -222,13 +222,19 @@ const applyCentralForces = (ids: Uint16Array, impulses: Float32Array) => {
 }
 
 const raycast = (data: Float32Array) => {
+  // @TODO remove ignores
+  // @ts-ignore
   const ray = ammo.castObject(rayCallback, ammo.RayResultCallback)
+  // @ts-ignore
   ray.set_m_closestHitFraction(1)
+  // @ts-ignore
   ray.set_m_collisionObject(null)
 
   rayOrigin.setValue(data[0], data[1], data[2])
   rayDestination.setValue(data[3], data[4], data[5])
+  // @ts-ignore
   rayCallback.get_m_rayFromWorld().setValue(data[0], data[1], data[2])
+  // @ts-ignore
   rayCallback.get_m_rayToWorld().setValue(data[3], data[4], data[5])
 
   world.rayTest(rayOrigin, rayDestination, rayCallback)

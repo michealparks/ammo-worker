@@ -30,9 +30,9 @@ export const createTrigger = (ammo: AmmoLib, data: Body) => {
   trigger.type = constants.BODYTYPE_STATIC
   trigger.trigger = true
   trigger.id = data.id
-  trigger.enter = data.enter
-  trigger.leave = data.leave
-  trigger.entity = data.entity
+  // trigger.enter = data.enter
+  // trigger.leave = data.leave
+  // trigger.entity = data.entity
   trigger.linkedId = data.linkedId
   trigger.reportTrigger = true
 

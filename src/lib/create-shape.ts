@@ -1,5 +1,5 @@
 import * as constants from '../constants'
-import * as types from '../types'
+import type * as types from '../types'
 
 type CollisionShape = 
   | Ammo.btBoxShape

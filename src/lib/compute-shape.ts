@@ -1,6 +1,6 @@
 
 import { Vector3, Matrix4, Box3 } from 'three'
-import * as types from '../types'
+import type * as types from '../types'
 import * as constants from '../constants'
 import type { Axis } from '../types'
 

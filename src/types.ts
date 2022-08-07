@@ -1,4 +1,4 @@
-import * as constants from './constants'
+import type * as constants from './constants'
 
 export type AmmoLib = typeof Ammo & {
   castObject(body: Ammo.btCollisionObject, type: Ammo.Type): (Ammo.btRigidBody & Body) | (Ammo.btRigidBody & Body & TriggerVolume) 
