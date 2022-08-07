@@ -2,8 +2,11 @@ import * as THREE from 'three'
 import * as constants from '../constants'
 import { ammo } from '../main'
 import type { Body } from '../types'
+import { gatherGeometries } from './gather-geometries'
+import { computeShape } from '../lib/compute-shape'
 
 export { gatherGeometries } from './gather-geometries'
+export { computeShape } from '../lib/compute-shape'
 
 const vec3 = new THREE.Vector3
 const quat = new THREE.Quaternion()
@@ -43,11 +46,33 @@ const createTransformFromInstancedMesh = (mesh: THREE.InstancedMesh, index: numb
   return transform
 }
 
-export const createBodyData = (mesh: THREE.Mesh, data: Partial<Body>) => {
+
+export const createBodyData = (
+  mesh: THREE.Mesh,
+  data: Partial<Body>,
+  options: { computeShape?: boolean } = {}
+) => {
   id += 1
 
   if (data.type === constants.BODYTYPE_DYNAMIC) {
     dynamicBodyMeshes.add(mesh)
+  }
+
+  let vertices: Float32Array | undefined
+  let indexes: Float32Array | undefined
+  let matrix: Float32Array | undefined
+
+  if (options.computeShape) {
+    const results = gatherGeometries(mesh)
+    vertices = computeShape(results.geometries, results.matrices, results.indexes, { type: ammo.BODYSHAPE_MESH }) as Float32Array
+    matrix = new Float32Array(mesh.matrixWorld.elements)
+  } else if (
+    data.shape === constants.BODYSHAPE_MESH &&
+    data.vertices === undefined
+  ) {
+    vertices = new Float32Array(mesh.geometry.attributes.position.array)
+    indexes = mesh.geometry.index ? new Float32Array(mesh.geometry.index.array) : undefined
+    matrix = new Float32Array(mesh.matrixWorld.elements)
   }
 
   idMap.set(mesh.id, id)
@@ -56,6 +81,9 @@ export const createBodyData = (mesh: THREE.Mesh, data: Partial<Body>) => {
   return {
     id,
     transform: createTransformFromMesh(mesh),
+    vertices,
+    indexes,
+    matrix,
     ...data,
   }
 }
