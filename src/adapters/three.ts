@@ -88,19 +88,19 @@ export const createBodyData = (
   }
 }
 
-export const addMesh = (mesh: THREE.Mesh, data: Partial<Body>) => {
-  const body = createBodyData(mesh, data)
+export const addMesh = (mesh: THREE.Mesh, data: Partial<Body>, options: { computeShape?: boolean } = {}) => {
+  const body = createBodyData(mesh, data, options)
 
   ammo.createRigidBodies([body])
 
   return body.id
 }
 
-export const addMeshes = (meshes: THREE.Mesh[], data: Partial<Body>) => {
+export const addMeshes = (meshes: THREE.Mesh[], data: Partial<Body>, options: { computeShape?: boolean } = {}) => {
   const bodies = []
   const ids = []
   for (const mesh of meshes) {
-    const body = createBodyData(mesh, data)
+    const body = createBodyData(mesh, data, options)
     bodies.push(body)
     ids.push(body.id)
   }
