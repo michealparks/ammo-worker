@@ -1,5 +1,5 @@
 import * as constants from '../constants'
-import { AmmoLib, Body } from '../types'
+import type { AmmoLib, Body } from '../types'
 
 const collisions = new Map()
 const frameCollisions = new Map()
