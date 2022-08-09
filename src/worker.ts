@@ -19,7 +19,6 @@ let rayCallback: Ammo.ClosestRayResultCallback
 let now = 0
 let dt = 0
 let then = 0
-let simSpeed = 1000 / 60
 let tickId = -1
 
 const bodies = new Map<number, Ammo.btRigidBody>()
@@ -51,11 +50,19 @@ const init = async () => {
     solver,
     collisionConfiguration
   )
-  setGravity(0, Number.parseFloat(import.meta.env.AMMO_DEFAULT_GRAVITY), 0)
-}
 
-const setSimulationSpeed = (speed: number) => {
-  simSpeed = 1000 / speed
+  setGravity(0, Number.parseFloat(import.meta.env.AMMO_DEFAULT_GRAVITY), 0)
+
+  if (import.meta.env.AMMO_DEBUG === 'true') {
+    const module = await import('./debug/draw')
+    // const drawer = new module.AmmoDebugDrawer(ammo, world)
+    // drawer.enable()
+
+    // setInterval(() => {
+    //   let mode = (drawer.getDebugMode() + 1) % 3
+    //   drawer.setDebugMode(mode)
+    // }, 1000)
+  }
 }
 
 const setGravity = (x: number, y: number, z: number) => {
@@ -69,15 +76,15 @@ const setFriction = (id: number, friction: number) => {
   body.activate()
 }
 
-const setTransform = (id: number, bodyTransform: Float32Array, shift = 0) => {
-  const body = bodies.get(id)!
+const setTransform = (bodyTransform: Float32Array, shift = 0) => {
+  const body = bodies.get(bodyTransform[0])!
 
   vec.setValue(0, 0, 0)
   body.setAngularVelocity(vec)
 	body.setLinearVelocity(vec)
 
-  vec.setValue(bodyTransform[shift + 0], bodyTransform[shift + 1], bodyTransform[shift + 2])
-  quat.setValue(bodyTransform[shift + 3], bodyTransform[shift + 4], bodyTransform[shift + 5], bodyTransform[shift + 6])
+  vec.setValue(bodyTransform[shift + 1], bodyTransform[shift + 2], bodyTransform[shift + 3])
+  quat.setValue(bodyTransform[shift + 4], bodyTransform[shift + 5], bodyTransform[shift + 6], bodyTransform[shift + 7])
   transform.setOrigin(vec)
   transform.setRotation(quat) 
   body.setWorldTransform(transform)
@@ -89,9 +96,9 @@ const setTransform = (id: number, bodyTransform: Float32Array, shift = 0) => {
   body.activate()
 }
 
-const setTransforms = (ids: Uint16Array, transforms: Float32Array) => {
-  for (let i = 0, shift = 0, l = ids.length; i < l; i += 1, shift += 7) {
-    setTransform(ids[i], transforms, shift)
+const setTransforms = (transforms: Float32Array) => {
+  for (let shift = 0, l = transforms.length; shift < l; shift += 8) {
+    setTransform(transforms, shift)
   }
 }
 
@@ -138,11 +145,11 @@ const createTriggers = (objects: TriggerVolume[]) => {
 
 const run = () => {
   now = then = performance.now()
-  tickId = self.setInterval(tick, simSpeed)
+  tickId = requestAnimationFrame(tick)
 }
 
 const pause = () => {
-  clearInterval(tickId)
+  cancelAnimationFrame(tickId)
 }
 
 const transforms = new Float32Array(Number.parseInt(import.meta.env.AMMO_MAX_BODIES, 10) * 7)
@@ -150,6 +157,7 @@ const maxSubsteps = Number.parseInt(import.meta.env.AMMO_MAX_SUBSTEPS, 10)
 const fixedTimestep = Number.parseFloat(import.meta.env.AMMO_FIXED_TIMESTEP)
 
 const tick = () => {
+  tickId = requestAnimationFrame(tick)
   now = performance.now()
   dt = (now - then) / 1000
   then = now
@@ -202,9 +210,9 @@ const applyCentralImpulse = (id: number, x: number, y: number, z: number) => {
   body.activate()
 }
 
-const applyCentralImpulses = (ids: Uint16Array, impulses: Float32Array) => {
-  for (let i = 0, shift = 0, l = ids.length; i < l; i += 1, shift += 3) {
-    applyCentralImpulse(ids[i], impulses[shift + 0], impulses[shift + 1], impulses[shift + 2])
+const applyCentralImpulses = (impulses: Float32Array) => {
+  for (let shift = 0, length = impulses.length; shift < length; shift += 4) {
+    applyCentralImpulse(impulses[shift + 0], impulses[shift + 1], impulses[shift + 2], impulses[shift + 3])
   }
 }
 
@@ -215,9 +223,9 @@ const applyCentralForce = (id: number, x: number, y: number, z: number) => {
   body.activate()
 }
 
-const applyCentralForces = (ids: Uint16Array, impulses: Float32Array) => {
-  for (let i = 0, shift = 0, l = ids.length; i < l; i += 1, shift += 3) {
-    applyCentralForce(ids[i], impulses[shift + 0], impulses[shift + 1], impulses[shift + 2])
+const applyCentralForces = (forces: Float32Array) => {
+  for (let shift = 0, length = forces.length; shift < length; shift += 4) {
+    applyCentralForce(forces[shift + 0], forces[shift + 1], forces[shift + 2], forces[shift + 3])
   }
 }
 
@@ -239,36 +247,32 @@ const raycast = (data: Float32Array) => {
 
   world.rayTest(rayOrigin, rayDestination, rayCallback)
 
-  const hits = []
+  const hit = new Float32Array(4)
+  hit[0] = -1
+
   if (rayCallback.hasHit()) {
     const object = rayCallback.m_collisionObject
     const body = ammo.castObject(object, ammo.btRigidBody)
     const point = rayCallback.m_hitPointWorld // .get_m_hitPointWorld()
-
-    hits.push({
-      id: body.id,
-      // name: ud0.name,
-      position: [point.x(), point.y(), point.z()]
-    })
+    hit[0] = body.id
+    hit[1] = point.x()
+    hit[2] = point.y()
+    hit[3] = point.z()
   }
 
-  return hits
+  return hit
 }
 
 export const api = {
   init,
   run,
   pause,
-  setSimulationSpeed,
   setGravity,
   setFriction,
-  setTransform,
   setTransforms,
   createRigidBodies,
   createTriggers,
-  applyCentralImpulse,
   applyCentralImpulses,
-  applyCentralForce,
   applyCentralForces,
   raycast,
 }

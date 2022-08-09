@@ -58,9 +58,6 @@ const playerId = physics.addMesh(player, {
   }
 })
 
-const playerTransform = new Float32Array(7)
-playerTransform[6] = 1
-
 let raycasting = false
 
 const raycast = async () => {
@@ -68,48 +65,40 @@ const raycast = async () => {
 
   const { x, y, z } = player.position
 
-  const hits = await ammo.raycast(x, y, z, x, y, 10)
+  const hit = await ammo.raycast(x, y, z, x, y, 10)
 
-  if (hits.length > 0) {
-    addImpulses(hits)
+  if (hit[0] > -1) {
+    addImpulses(hit[0])
   }
 
   setTimeout(() => { raycasting = false }, 100)
 }
 
-const addImpulses = (hits: { id: number, position: Vector3 }[]) => {
-  const ids = new Uint16Array(hits.length)
-  const transforms = new Float32Array(hits.length * 7) 
-
-  for (let i = 0; i < hits.length; i += 1) {
-    ids[i] = hits[i].id
-  }
-  
-  for (let i = 0; i < hits.length * 7; i += 7) {
-    transforms[i + 0] = 0
-    transforms[i + 1] = 0
-    transforms[i + 2] = Math.random() * 50
-    transforms[i + 3] = Math.random() - 0.5
-    transforms[i + 4] = Math.random() - 0.5
-    transforms[i + 5] = Math.random() - 0.5
-    transforms[i + 6] = 1
-  }
-
-  ammo.applyCentralImpulses(ids, transforms)
+const addImpulses = (id: number) => {
+  const impulse = new Float32Array(4) 
+  impulse[0] = id
+  impulse[1] = 0
+  impulse[2] = 0
+  impulse[3] = 50
+  ammo.applyCentralImpulses(impulse)
 }
+
+const playerTransform = new Float32Array(8)
+playerTransform[6] = 1
 
 export const update = () => {
   player.position.x += controls.keyboard.x / 5
   player.position.z -= controls.keyboard.y / 5
 
-  playerTransform[0] = player.position.x
-  playerTransform[2] = player.position.z
+  playerTransform[0] = playerId
+  playerTransform[1] = player.position.x
+  playerTransform[3] = player.position.z
 
   if (controls.keyboard.e > 0 && raycasting === false) {
     raycast()
   }
 
   if (controls.keyboard.x || controls.keyboard.y) {
-    ammo.setTransform(playerId, playerTransform)
+    ammo.setTransforms(playerTransform)
   }
 }

@@ -5,7 +5,28 @@ import filesize from 'rollup-plugin-filesize'
 
 const { DEV, PROD } = process.env
 
-export default {
+export default [{
+  context: 'exports',
+  input: 'node_modules/ammo.js/builds/ammo.js',
+  output: [{
+    file: 'src/ammo.test.js',
+    format: 'es',
+    banner: 'const module = { exports: {} };',
+    footer: 'export default Ammo;'
+  }],
+  plugins: [
+    replace({
+      'this.Ammo': 'module.exports.Ammo'
+    }),
+    alias({
+      entries: {
+        fs: require.resolve('./noop'),
+        path: require.resolve('./noop')
+      }
+    }),
+    PROD && filesize(),
+  ],
+}, {
   context: 'exports',
   input: 'node_modules/ammo.js/builds/ammo.wasm.js',
   output: [{
@@ -32,6 +53,6 @@ export default {
         }
       ]
     }),
-    PROD && filesize()
+    PROD && filesize(),
   ]
-}
+}]

@@ -40,17 +40,17 @@ const main = async () => {
     case 'i':
       const count = physics.id
       const magnitude = 20
-      const ids = new Uint16Array(constants.NUM_MESHES)
-      const impulses = new Float32Array(constants.NUM_MESHES * 3)
+      // const ids = new Uint16Array(constants.NUM_MESHES)
+      const impulses = new Float32Array(constants.NUM_MESHES * 4)
 
-      for (let i = 0, j = 0; i < count; i += 1, j += 3) {
-        ids[i] = i
-        impulses[j + 0] = (Math.random() - 0.5) * magnitude
-        impulses[j + 1] = (Math.random() - 0.5) * magnitude
-        impulses[j + 2] = (Math.random() - 0.5) * magnitude
+      for (let i = 0, j = 0; j < count; i += 4, j += 1) {
+        impulses[i + 0] = i
+        impulses[i + 1] = (Math.random() - 0.5) * magnitude
+        impulses[i + 2] = (Math.random() - 0.5) * magnitude
+        impulses[i + 3] = (Math.random() - 0.5) * magnitude
       }
 
-      ammo.applyCentralImpulses(ids, impulses)
+      ammo.applyCentralImpulses(impulses)
       break
     case 'p':
       if (ammo.running) {
@@ -75,19 +75,20 @@ const main = async () => {
         }
       }
 
-      let transforms = new Float32Array(resetIds.length * 7) 
+      const transforms = new Float32Array(resetIds.length * 8) 
   
-      for (let i = 0; i < resetIds.length * 7; i += 7) {
-        transforms[i + 0] = 0
-        transforms[i + 1] = Math.random() * 10 + 30
-        transforms[i + 2] = 0
-        transforms[i + 3] = Math.random() - 0.5
+      for (let i = 0, j = 0, l = resetIds.length; j < l; j += 1, i += 8) {
+        transforms[i + 0] = resetIds[j]
+        transforms[i + 1] = 0
+        transforms[i + 2] = Math.random() * 10 + 30
+        transforms[i + 3] = 0
         transforms[i + 4] = Math.random() - 0.5
         transforms[i + 5] = Math.random() - 0.5
-        transforms[i + 6] = 1
+        transforms[i + 6] = Math.random() - 0.5
+        transforms[i + 7] = 1
       }
   
-      ammo.setTransforms(new Uint16Array(resetIds), transforms)
+      ammo.setTransforms(transforms)
     }
   })
 

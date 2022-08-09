@@ -24,13 +24,16 @@ export const AmmoDebugConstants = {
 }
 
 const setXYZ = (
-  array: number[],
-  index: number, x: number, y: number, z: number) => {
+  array: Float32Array,
+  index: number, x: number, y: number, z: number
+) => {
   index *= 3
   array[index + 0] = x
   array[index + 1] = y
   array[index + 2] = z
 }
+
+const buffersize = Number(import.meta.env.AMMO_DEBUG_DRAW_BUFFER_SIZE)
 
 /**
  * An implementation of the btIDebugDraw interface in Ammo.js, for debug rendering of Ammo shapes
@@ -44,42 +47,21 @@ const setXYZ = (
 export class AmmoDebugDrawer {
   index = 0
   enabled = false
-
-  indexArray: Uint32Array
-  verticesArray: Float32Array
-  colorsArray: Float32Array
-
+  warnedOnce = false
   ammo: typeof Ammo
   world: Ammo.btCollisionWorld
   debugDrawer: Ammo.DebugDrawer
-
+  verticesArray = new Float32Array(buffersize)
+  colorsArray = new Float32Array(buffersize)
+  debugDrawMode = AmmoDebugConstants.DrawWireframe
 
   constructor(
     ammo: typeof Ammo,
-    indexArray: Uint32Array,
-    verticesArray: Float32Array,
-    colorsArray: Float32Array,
-    world: Ammo.btCollisionWorld,
-    options: {
-      debugDrawMode?: unknown
-    } = {}
+    world: Ammo.btCollisionWorld
   ) {
     this.ammo = ammo
     this.world = world
-    options = options
-
-    this.indexArray = indexArray
-    this.verticesArray = verticesArray
-    this.colorsArray = colorsArray
-    
-    this.debugDrawMode = options.debugDrawMode || AmmoDebugConstants.DrawWireframe
-
-    if (this.indexArray) {
-      Atomics.store(this.indexArray, 0, this.index)
-    }
-
     this.debugDrawer = new ammo.DebugDrawer()
-
     this.world.setDebugDrawer(this.debugDrawer)
   }
 
@@ -95,21 +77,13 @@ export class AmmoDebugDrawer {
     if (!this.enabled) {
       return
     }
-  
-    if (this.indexArray) {
-      if (Atomics.load(this.indexArray, 0) === 0) {
-        this.index = 0
-        this.world.debugDrawWorld()
-        Atomics.store(this.indexArray, 0, this.index)
-      }
-    } else {
-      this.index = 0
-      this.world.debugDrawWorld()
-    }
+
+    this.index = 0
+    this.world.debugDrawWorld()
   }
 
   drawLine (from: number, to: number, color: number) {
-    const heap = Ammo.HEAPF32
+    const heap = this.ammo.HEAPF32
     const r = heap[(color + 0) / 4]
     const g = heap[(color + 4) / 4]
     const b = heap[(color + 8) / 4]
@@ -128,7 +102,7 @@ export class AmmoDebugDrawer {
   }
 
   drawContactPoint (pointOnB: number, normalOnB: number, distance: number, lifeTime: number, color: number) {
-    const heap = Ammo.HEAPF32
+    const heap = this.ammo.HEAPF32
     const r = heap[(color + 0) / 4]
     const g = heap[(color + 4) / 4]
     const b = heap[(color + 8) / 4]
@@ -147,20 +121,19 @@ export class AmmoDebugDrawer {
   }
 
   reportErrorWarning (warningString: string) {
-    if (Ammo.hasOwnProperty("UTF8ToString")) {
-      console.warn(Ammo.UTF8ToString(warningString))
+    if (this.ammo.hasOwnProperty("UTF8ToString")) {
+      console.warn(this.ammo.UTF8ToString(warningString))
     } else if (!this.warnedOnce) {
       this.warnedOnce = true
       console.warn("Cannot print warningString, please export UTF8ToString from Ammo.js in make.py")
     }
   }
 
-  setDebugMode (debugMode) {
+  setDebugMode (debugMode: number) {
     this.debugDrawMode = debugMode
   }
 
   getDebugMode () {
     return this.debugDrawMode
   }
-  
 }

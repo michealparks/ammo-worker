@@ -45,17 +45,18 @@ const playerId = physics.addMesh(player, {
   }
 })
 
-const playerTransform = new Float32Array(7)
-playerTransform[6] = 1
+const playerTransform = new Float32Array(8)
+playerTransform[7] = 1
 
 export const update = () => {
   player.position.x += controls.keyboard.x / 5
   player.position.z -= controls.keyboard.y / 5
 
-  playerTransform[0] = player.position.x
-  playerTransform[2] = player.position.z
+  playerTransform[0] = playerId
+  playerTransform[1] = player.position.x
+  playerTransform[3] = player.position.z
 
   if (controls.keyboard.x || controls.keyboard.y) {
-    ammo.setTransform(playerId, playerTransform)
+    ammo.setTransforms(playerTransform)
   }
 }

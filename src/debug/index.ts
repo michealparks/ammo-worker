@@ -1,7 +1,6 @@
 import * as THREE from 'three'
 import { scene } from 'three-kit'
 import * as debug from 'three-kit/debug'
-// import * as constants from '../constants'
 import { ammo } from '../main'
 
 const material = new THREE.LineBasicMaterial({ color: 0x0000ff })
@@ -53,6 +52,8 @@ debug.stats.addMonitor(statsParams, 'physics', {
 
 ammo.on('tick', (data) => {
   statsParams.physics = data.fps
+
+  if (collisionFolder.expanded) return
 
   let output = ''
 
