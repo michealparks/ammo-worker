@@ -1,7 +1,12 @@
+/**
+ * This is how debugging should be imported to allow tree-shaking
+ */
+ if (import.meta.env.THREE_DEBUG === 'true') {
+  await import('../src/debug')
+}
+
 import './index.css'
 import { run, update } from 'three-kit'
-import * as debug from 'three-kit/debug'
-import './renderer'
 import './lib/pane'
 import { ammo } from '../src/main'
 import * as physics from '../src/adapters/three'
@@ -9,6 +14,8 @@ import * as constants from './constants'
 import { floor, floorSize, floorHeight } from './demos/lib/floor'
 
 const demos = import.meta.glob('./demos/*.ts')
+
+import './renderer'
 
 const main = async () => {
   await ammo.init()
@@ -102,14 +109,9 @@ const main = async () => {
 
   ammo.run()
 
-  update(() => {
-    debug.update()
-    demoModule.update?.()
-  })
+  update(() => demoModule.update?.())
 
   run()
-
-  import('../src/debug')
 }
 
 main()

@@ -1,13 +1,5 @@
 import * as THREE from 'three'
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
-import { ammo } from '../src/main'
-import { camera, renderer, scene, lights, update } from 'three-kit'
-
-let physicsDt = -1
-
-ammo.on('tick', ({ dt }) => {
-  physicsDt = dt
-})
+import { camera, scene, lights } from 'three-kit'
 
 const fog = new THREE.Fog('lightblue')
 fog.far = 100
@@ -19,12 +11,6 @@ camera.position.set(10, 15, 25)
 camera.lookAt(0, 0, 0)
 
 scene.background = new THREE.Color('lightblue');
-
-const controls = new OrbitControls(camera, renderer.domElement)
-controls.enableDamping = true
-controls.dampingFactor = 1
-
-update(() => controls.update())
 
 const ambientLight = lights.createAmbient()
 ambientLight.intensity = 0.2
