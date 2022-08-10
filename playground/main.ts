@@ -17,6 +17,7 @@ const demos = import.meta.glob('./demos/*.ts')
 
 import './renderer'
 
+
 const main = async () => {
   await ammo.init()
 
@@ -41,10 +42,12 @@ const main = async () => {
       const count = physics.id
       const magnitude = 20
       // const ids = new Uint16Array(constants.NUM_MESHES)
+
+      
       const impulses = new Float32Array(constants.NUM_MESHES * 4)
 
       for (let i = 0, j = 0; j < count; i += 4, j += 1) {
-        impulses[i + 0] = i
+        impulses[i + 0] = j
         impulses[i + 1] = (Math.random() - 0.5) * magnitude
         impulses[i + 2] = (Math.random() - 0.5) * magnitude
         impulses[i + 3] = (Math.random() - 0.5) * magnitude
@@ -61,7 +64,7 @@ const main = async () => {
     }
   })
 
-  ammo.on('tick', (data) => {
+  ammo.on('collisions', (data) => {
     const { triggerEnter } = data
 
     let resetIds: number[] = []
@@ -96,14 +99,14 @@ const main = async () => {
     {
       id: -2,
       shape: ammo.BODYSHAPE_BOX,
-      enter: 'all',
-      leave: 'all',
-      entity: 0,
+      // enter: 'all',
+      // leave: 'all',
+      // entity: 0,
       transform: new Float32Array([0, -50, 0, 0, 0, 0, 1]),
       halfExtents: {
-        x: 100,
+        x: 500,
         y: 1,
-        z: 100,
+        z: 500,
       } 
     }
   ])

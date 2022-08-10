@@ -99,8 +99,9 @@ export const addMesh = (mesh: THREE.Mesh, data: Partial<Body>, options: { comput
 export const addMeshes = (meshes: THREE.Mesh[], data: Partial<Body>, options: { computeShape?: boolean } = {}) => {
   const bodies = []
   const ids = []
-  for (const mesh of meshes) {
-    const body = createBodyData(mesh, data, options)
+
+  for (let i = 0, l = meshes.length; i < l; i += 1) {
+    const body = createBodyData(meshes[i], data, options)
     bodies.push(body)
     ids.push(body.id)
   }
@@ -144,10 +145,9 @@ export const destroyAll = () => {
 
 }
 
-ammo.on('tick', (data) => {
-  const { transforms } = data
-
+ammo.on('tick', (transforms) => {
   let shift = 0
+
   for (const mesh of dynamicBodyMeshes) {
     if ('isInstancedMesh' in mesh) {
       for (let index = 0, count = mesh.count; index < count; index += 1) {

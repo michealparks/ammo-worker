@@ -11,7 +11,7 @@ const matrix = new THREE.Matrix4()
 for (let index = 0; index < constants.NUM_MESHES; index += 1) {
   color.set(randomColor())
   boxes.setColorAt(index, color)
-  matrix.setPosition(Math.random(), 1 + index, Math.random())
+  matrix.setPosition(Math.random() * 20 - 10, index, Math.random() * 20 - 10)
   boxes.setMatrixAt(index, matrix)
 }
 

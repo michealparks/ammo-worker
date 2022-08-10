@@ -20,6 +20,7 @@ let now = 0
 let dt = 0
 let then = 0
 let tickId = -1
+let fps = 0
 
 const bodies = new Map<number, Ammo.btRigidBody>()
 const dynamicBodies = new Set<Ammo.btRigidBody>()
@@ -107,7 +108,9 @@ const createRigidBodies = (objects: Body[]) => {
   let body: Ammo.btRigidBody
   let inertia = false
 
-  for (const data of objects) {
+  for (let i = 0, l = objects.length; i < l; i += 1) {
+    const data = objects[i]
+
     switch (data.type) {
     case constants.BODYTYPE_STATIC: 
       inertia = false
@@ -136,7 +139,8 @@ const createRigidBodies = (objects: Body[]) => {
 }
 
 const createTriggers = (objects: TriggerVolume[]) => {
-  for (const data of objects) {
+  for (let i = 0, l = objects.length; i < l; i += 1) {
+    const data = objects[i]
     const trigger = createTrigger(ammo, data)
     bodies.set(data.id, trigger)
     world.addRigidBody(trigger, constants.BODYGROUP_STATIC, constants.BODYMASK_NOT_STATIC)
@@ -160,6 +164,7 @@ const tick = () => {
   tickId = requestAnimationFrame(tick)
   now = performance.now()
   dt = (now - then) / 1000
+  fps = 1000 / (now - then)
   then = now
 
   world.stepSimulation(dt, maxSubsteps, fixedTimestep)
@@ -193,14 +198,38 @@ const tick = () => {
 
   // const globalEvents: any[] = []
   checkForCollisions(ammo, world, /* globalEvents */)
-  const data = cleanOldCollisions(/*globalEvents */)
+  const {
+    triggerEnter,
+    triggerLeave,
+    collisionStart,
+    collisionEnd,
+  } = cleanOldCollisions(/*globalEvents */)
+
+  postMessage(transforms.buffer, undefined, [transforms.buffer])
+
+  if (
+    triggerEnter.length === 0 &&
+    triggerLeave.length === 0 &&
+    collisionStart.length === 0 &&
+    collisionEnd.length === 0
+  ) return
 
   postMessage({
-    ...data,
-    fps: 1000 / (dt * 1000),
-    transforms,
-    // globalEvents
+    event: 'collisions',
+    triggerEnter,
+    triggerLeave,
+    collisionStart,
+    collisionEnd,
   })
+}
+
+if (import.meta.env.AMMO_DEBUG === 'true') {
+  setInterval(() => {
+    postMessage({
+      event: 'fps',
+      fps,
+    })
+  }, 1000)
 }
 
 const applyCentralImpulse = (id: number, x: number, y: number, z: number) => {
@@ -229,6 +258,7 @@ const applyCentralForces = (forces: Float32Array) => {
   }
 }
 
+const hit = new Float32Array(4)
 const raycast = (data: Float32Array) => {
   // @TODO remove ignores
   // @ts-ignore
@@ -247,7 +277,6 @@ const raycast = (data: Float32Array) => {
 
   world.rayTest(rayOrigin, rayDestination, rayCallback)
 
-  const hit = new Float32Array(4)
   hit[0] = -1
 
   if (rayCallback.hasHit()) {

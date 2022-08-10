@@ -44,15 +44,14 @@ const statsParams = {
   physics: 0
 }
 
-debug.stats.addMonitor(statsParams, 'physics', {
+debug.stats.addMonitor(ammo, 'fps', {
+  label: 'physics fps',
   view: 'graph',
   min: 0,
-  max: 60,
+  max: 120,
 });
 
-ammo.on('tick', (data) => {
-  statsParams.physics = data.fps
-
+ammo.on('collisions', (data) => {
   if (collisionFolder.expanded) return
 
   let output = ''

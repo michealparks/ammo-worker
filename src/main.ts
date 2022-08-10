@@ -7,6 +7,7 @@ export { computeShape } from './lib/compute-shape'
 type Callback = (data: any) => void
 
 const tickCallbacks = new Set<Callback>()
+const collisionCallbacks = new Set<Callback>()
 
 const worker = new Worker(
   new URL(import.meta.env.AMMO_WORKER_PATH, import.meta.url),
@@ -24,10 +25,18 @@ worker.addEventListener('messageerror', (event) => {
 worker.addEventListener('message', ({ data }) => {
   if (data.id) {
     return
-  }
-
-  for (const callback of tickCallbacks) {
-    callback(data)
+  } else if (data.byteLength > 0) {
+    const transforms = new Float32Array(data)
+    for (const callback of tickCallbacks) {
+      callback(transforms)
+    }
+    return
+  } else if (data.event === 'collisions') {
+    for (const callback of collisionCallbacks) {
+      callback(data)
+    }
+  } else if (data.event === 'fps') {
+    ammo.fps = data.fps
   }
 })
 
@@ -36,6 +45,9 @@ const api = Comlink.wrap<typeof API>(worker)
 export const on = (eventName: string, callback: Callback) => {
   if (eventName === 'tick') {
     tickCallbacks.add(callback)
+  }
+  if (eventName === 'collisions') {
+    collisionCallbacks.add(callback)
   }
 }
 
@@ -50,7 +62,6 @@ const pause = async () => {
 }
 
 const raycastData = new Float32Array(6)
-
 const raycast = (startX: number, startY: number, startZ: number, endX: number, endY: number, endZ: number) => {
   raycastData[0] = startX
   raycastData[1] = startY
@@ -62,6 +73,7 @@ const raycast = (startX: number, startY: number, startZ: number, endX: number, e
 }
 
 export const ammo = {
+  fps: 0,
   running: false,
   ...constants,
   on,
