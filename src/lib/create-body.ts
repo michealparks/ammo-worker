@@ -7,6 +7,8 @@ const LINEAR_DAMPING = Number.parseFloat(import.meta.env.AMMO_DEFAULT_LINEAR_DAM
 const ANGULAR_DAMPING = Number.parseFloat(import.meta.env.AMMO_DEFAULT_ANGULAR_DAMPING)
 const RESTITUION = Number.parseFloat(import.meta.env.AMMO_DEFAULT_RESTITUTION)
 const FRICTION = Number.parseFloat(import.meta.env.AMMO_DEFAULT_FRICTION)
+const ROLLING_FRICTION = Number.parseFloat(import.meta.env.AMMO_DEFAULT_ROLLING_FRICTION)
+const CCD_MOTION_THRESHOLD = Number.parseFloat(import.meta.env.AMMO_CCD_MOTION_THRESHOLD)
 
 export const createBody = (ammo: AmmoLib, data: Body, inertia: boolean, flag?: Flag) => {
   const {
@@ -17,6 +19,7 @@ export const createBody = (ammo: AmmoLib, data: Body, inertia: boolean, flag?: F
     angularDamping = ANGULAR_DAMPING,
     restitution = RESTITUION,
     friction = FRICTION,
+    rollingFriction = ROLLING_FRICTION
   } = data
 
   const transform = data.transform!
@@ -58,14 +61,17 @@ export const createBody = (ammo: AmmoLib, data: Body, inertia: boolean, flag?: F
   }
 
   rigidbody.type = type
+
   rigidbody.trigger = false
   rigidbody.id = data.id
   rigidbody.linkedId = data.linkedId ?? -1
   rigidbody.reportCollision = data.reportCollision ?? false
   rigidbody.reportTrigger = data.reportTrigger ?? true
 
+  rigidbody.setCcdMotionThreshold(CCD_MOTION_THRESHOLD)
   rigidbody.setRestitution(restitution)
   rigidbody.setFriction(friction)
+  rigidbody.setRollingFriction(rollingFriction)
   rigidbody.setDamping(linearDamping, angularDamping)
 
   if (flag !== undefined) {

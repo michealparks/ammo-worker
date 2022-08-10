@@ -2,7 +2,7 @@ import * as THREE from 'three'
 import { camera, scene, lights } from 'three-kit'
 
 const fog = new THREE.Fog('lightblue')
-fog.far = 100
+fog.far = 1000
 scene.fog = fog
 
 camera.near = 0.1

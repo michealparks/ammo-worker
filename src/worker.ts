@@ -8,6 +8,7 @@ import { checkForCollisions, cleanOldCollisions } from './lib/collisions'
 
 let ammo: AmmoLib
 let vec: Ammo.btVector3
+let vec2: Ammo.btVector3
 let quat: Ammo.btQuaternion
 let transform: Ammo.btTransform
 let world: Ammo.btDiscreteDynamicsWorld
@@ -32,6 +33,7 @@ const init = async () => {
     }
   })
   vec = new ammo.btVector3()
+  vec2 = new ammo.btVector3()
   quat = new ammo.btQuaternion(0, 0, 0, 1)
   transform = new ammo.btTransform()
 
@@ -73,12 +75,13 @@ const setGravity = (x: number, y: number, z: number) => {
 
 const setFriction = (id: number, friction: number) => {
   const body = bodies.get(id)!
-  body.setFriction(friction)
   body.activate()
+  body.setFriction(friction)
 }
 
 const setTransform = (bodyTransform: Float32Array, shift = 0) => {
   const body = bodies.get(bodyTransform[0])!
+  body.activate()
 
   vec.setValue(0, 0, 0)
   body.setAngularVelocity(vec)
@@ -93,8 +96,38 @@ const setTransform = (bodyTransform: Float32Array, shift = 0) => {
   if (body.type === constants.BODYTYPE_KINEMATIC) {
     body.getMotionState().setWorldTransform(transform)
   }
+}
 
-  body.activate()
+/**
+ * Setting the collision mask sets which groups this body collides with. It is a bitfield of 16 bits,
+ * the first 8 bits are reserved for engine use. Defaults to 65535.
+ *
+ * @param {number} - The id of the body
+ * @param {number}
+ */
+const setMask = (id: number, mask: number) => {
+  const body = bodies.get(id)!
+
+  // re-enabling simulation adds rigidbody back into world with new masks
+  world.removeRigidBody(body)
+  world.addRigidBody(body, body.group, mask)
+}
+
+/**
+ * Set the mass of the body. This is only relevant for {@link constants.BODYTYPE_DYNAMIC} bodies, other types
+ * have infinite mass. Defaults to 1.
+ *
+ * @param {number} id - The id of the body
+ * @param {number} mass - The new mass
+ */
+const setMass = (id: number, mass: number = 1) => {
+  const body = bodies.get(id)!
+
+  disableSimulation(id)
+  body.getCollisionShape().calculateLocalInertia(mass, vec)
+  body.setMassProps(mass, vec)
+  body.updateInertiaTensor()
+  enableSimulation(id)
 }
 
 const setTransforms = (transforms: Float32Array) => {
@@ -115,22 +148,26 @@ const createRigidBodies = (objects: Body[]) => {
     case constants.BODYTYPE_STATIC: 
       inertia = false
       flag = constants.BODYFLAG_STATIC_OBJECT
-      body = createBody(ammo, data, inertia, flag),
+      body = createBody(ammo, data, inertia, flag)
+      body.group = constants.BODYGROUP_STATIC
       world.addRigidBody(body, constants.BODYGROUP_STATIC, constants.BODYMASK_NOT_STATIC)
       break
     case constants.BODYTYPE_DYNAMIC:
       inertia = true //  data.sprite === false && data.mass !== 0
       flag = undefined
       body = createBody(ammo, data, inertia, flag)
+      body.group = constants.BODYGROUP_DYNAMIC
       dynamicBodies.add(body)
+      
       world.addRigidBody(body, constants.BODYGROUP_DYNAMIC, constants.BODYMASK_ALL)
       break
     case constants.BODYTYPE_KINEMATIC:
       inertia = false
       flag = constants.BODYFLAG_KINEMATIC_OBJECT
       body = createBody(ammo, data, inertia, flag)
+      body.group = constants.BODYGROUP_KINEMATIC
       body.setActivationState(constants.BODYSTATE_DISABLE_DEACTIVATION)
-      world.addRigidBody(body)
+      world.addRigidBody(body, constants.BODYGROUP_KINEMATIC, constants.BODYMASK_ALL)
       break
     }
 
@@ -169,6 +206,9 @@ const tick = () => {
 
   world.stepSimulation(dt, maxSubsteps, fixedTimestep)
 
+  checkForCollisions(ammo, world)
+  cleanOldCollisions()
+
   let index = 0
   let shift = 0
 
@@ -196,31 +236,7 @@ const tick = () => {
     index += 1
   }
 
-  // const globalEvents: any[] = []
-  checkForCollisions(ammo, world, /* globalEvents */)
-  const {
-    triggerEnter,
-    triggerLeave,
-    collisionStart,
-    collisionEnd,
-  } = cleanOldCollisions(/*globalEvents */)
-
   postMessage(transforms.buffer, undefined, [transforms.buffer])
-
-  if (
-    triggerEnter.length === 0 &&
-    triggerLeave.length === 0 &&
-    collisionStart.length === 0 &&
-    collisionEnd.length === 0
-  ) return
-
-  postMessage({
-    event: 'collisions',
-    triggerEnter,
-    triggerLeave,
-    collisionStart,
-    collisionEnd,
-  })
 }
 
 if (import.meta.env.AMMO_DEBUG === 'true') {
@@ -234,9 +250,39 @@ if (import.meta.env.AMMO_DEBUG === 'true') {
 
 const applyCentralImpulse = (id: number, x: number, y: number, z: number) => {
   const body = bodies.get(id)!
+  body.activate()
   vec.setValue(x, y, z)
   body.applyCentralImpulse(vec)
+}
+
+/**
+ * Apply a torque impulse (rotational force applied instantaneously) to the body.
+ *
+ * @param {number} id - The id of the body
+ * @param {number} x - The x-component of the torque impulse in world-space.
+ * @param {number} y - The y-component of the torque impulse in world-space.
+ * @param {number} z - The z-component of the torque impulse in world-space.
+ */
+const applyTorqueImpulse = (id: number, x: number, y: number, z: number) => {
+  const body = bodies.get(id)!
   body.activate()
+  vec.setValue(x, y, z)
+  body.applyTorqueImpulse(vec)
+}
+
+/**
+ * Apply torque (rotational force) to the body.
+ *
+ * @param {number} id - The id of the body
+ * @param {number} x - The x-component of the torque force in world-space.
+ * @param {number} y - The y-component of the torque force in world-space.
+ * @param {number} z - The z-component of the torque force in world-space.
+ */
+const applyTorque = (id: number, x: number, y: number, z: number) => {
+  const body = bodies.get(id)!
+  body.activate()
+  vec.setValue(x, y, z)
+  body.applyTorque(vec)
 }
 
 const applyCentralImpulses = (impulses: Float32Array) => {
@@ -245,17 +291,86 @@ const applyCentralImpulses = (impulses: Float32Array) => {
   }
 }
 
+/**
+ * Apply an force to the body at a point. The force is applied at an offset this point by specifying a world space
+ * vector from the body's origin to the point of application.
+ *
+ * @param {number} id - The id of the body
+ * @param {number} x - The x-component of the force in world-space.
+ * @param {number} y - The y-component of the force in world-space.
+ * @param {number} z - The z-component of the force in world-space.
+ * @param {number} px - The x-component of a world-space offset from the body's position
+ * where the force is applied.
+ * @param {number} py - The y-component of a world-space offset from the body's position
+ * where the force is applied.
+ * @param {number} pz - The z-component of a world-space offset from the body's position
+ * where the force is applied.
+ */
+const applyForce = (id: number, x: number, y: number, z: number, px: number, py: number, pz: number) => {
+  const body = bodies.get(id)!
+  body.activate()
+  vec.setValue(x, y, z)
+  vec2.setValue(px, py, pz)
+  body.applyForce(vec, vec2)
+}
+
 const applyCentralForce = (id: number, x: number, y: number, z: number) => {
   const body = bodies.get(id)!
+  body.activate()
   vec.setValue(x, y, z)
   body.applyCentralForce(vec)
-  body.activate()
 }
 
 const applyCentralForces = (forces: Float32Array) => {
   for (let shift = 0, length = forces.length; shift < length; shift += 4) {
     applyCentralForce(forces[shift + 0], forces[shift + 1], forces[shift + 2], forces[shift + 3])
   }
+}
+
+const enableSimulation = (id: number) => {
+  const body = bodies.get(id)!
+
+  switch (body.type) {
+    case constants.BODYTYPE_DYNAMIC:
+      body.forceActivationState(constants.BODYSTATE_ACTIVE_TAG)
+      break
+    case constants.BODYTYPE_KINEMATIC:
+      body.forceActivationState(constants.BODYSTATE_DISABLE_DEACTIVATION)
+      break
+    case constants.BODYTYPE_STATIC:
+      body.forceActivationState(constants.BODYSTATE_ACTIVE_TAG)
+      break
+  }
+
+  body.activate()
+}
+
+/**
+ * Returns true if the rigid body is currently actively being simulated. I.e. Not 'sleeping'.
+ *
+ * @param {number} id - The id of the body
+ * @returns {boolean} True if the body is active.
+ */
+const isActive = (id: number): boolean => {
+  return bodies.get(id)!.isActive()
+}
+
+/**
+ * Forcibly activate the rigid body simulation. Only affects rigid bodies of type
+ * {@link constants.BODYTYPE_DYNAMIC}.
+ *
+ * @param {number} id - The id of the body
+ */
+const activate = (id: number) => {
+  bodies.get(id)!.activate()
+}
+
+const disableSimulation = (id: number) => {
+  const body = bodies.get(id)!
+
+  // set activation state to disable simulation to avoid body.isActive() to return
+  // true even if it's not in the dynamics world
+  body.forceActivationState(constants.BODYSTATE_DISABLE_SIMULATION)
 }
 
 const hit = new Float32Array(4)
@@ -297,12 +412,24 @@ export const api = {
   run,
   pause,
   setGravity,
+  setMask,
+  setMass,
   setFriction,
+  setTransform,
   setTransforms,
   createRigidBodies,
   createTriggers,
+  applyCentralImpulse,
   applyCentralImpulses,
+  applyTorque,
+  applyTorqueImpulse,
+  applyForce,
+  applyCentralForce,
   applyCentralForces,
+  disableSimulation,
+  enableSimulation,
+  isActive,
+  activate,
   raycast,
 }
 

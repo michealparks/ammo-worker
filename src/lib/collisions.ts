@@ -11,9 +11,9 @@ const triggerLeave = new Map()
 const storeCollision = (body: Body, other: Body) => {
   const { id } = body
   let isNewCollision = false
-  
+
   if (collisions.has(id) === false) {
-    collisions.set(id, { body, others: new Map() })
+    collisions.set(id, { body, others: new Map<number, Body>() })
   }
 
   const collision = collisions.get(id)
@@ -23,8 +23,8 @@ const storeCollision = (body: Body, other: Body) => {
     isNewCollision = true
   }
 
-  if (frameCollisions.has(id) === false){
-    frameCollisions.set(id, { body, others: new Map() })
+  if (frameCollisions.has(id) === false) {
+    frameCollisions.set(id, { body, others: new Map<number, Body>() })
   }
   
   frameCollisions.get(id).others.set(other.id, other)
@@ -42,8 +42,7 @@ const registerEvent = (events: Map<number, any[]>, id: number, data: unknown) =>
 
 export const checkForCollisions = (
   ammo: AmmoLib,
-  world: Ammo.btDiscreteDynamicsWorld,
-  // globalEvents: any[]
+  world: Ammo.btDiscreteDynamicsWorld
 ) => {
   triggerEnter.clear()
   collisionStart.clear()
@@ -60,13 +59,11 @@ export const checkForCollisions = (
 
     const body0 = ammo.castObject(manifold.getBody0(), ammo.btRigidBody)
     const body1 = ammo.castObject(manifold.getBody1(), ammo.btRigidBody)
-    const flags0 = body0.getCollisionFlags()
-    const flags1 = body1.getCollisionFlags()
 
     let isNewCollision = false
 
-    const isTriggerBody0 = (flags0 & constants.BODYFLAG_NORESPONSE_OBJECT) === constants.BODYFLAG_NORESPONSE_OBJECT
-    const isTriggerBody1 = (flags1 & constants.BODYFLAG_NORESPONSE_OBJECT) === constants.BODYFLAG_NORESPONSE_OBJECT
+    const isTriggerBody0 = (body0.getCollisionFlags() & constants.BODYFLAG_NORESPONSE_OBJECT) === constants.BODYFLAG_NORESPONSE_OBJECT
+    const isTriggerBody1 = (body1.getCollisionFlags() & constants.BODYFLAG_NORESPONSE_OBJECT) === constants.BODYFLAG_NORESPONSE_OBJECT
 
     // TODO only store, report collisions if event is present
     // Handle triggers
@@ -74,19 +71,11 @@ export const checkForCollisions = (
       isNewCollision = storeCollision(body0, body1)
       if (isNewCollision && isTriggerBody1 === false) {
         if (body0.reportTrigger) registerEvent(triggerEnter, body0.id, body1.id)
-
-        // if ('enter' in body0 && (body1.id === body0.entity || body0.entity === constants.ENTITY_ANY)) {
-        //   globalEvents.push([body0.enter, body0.id, body1.id])
-        // }
       }
 
       isNewCollision = storeCollision(body1, body0)
       if (isNewCollision && isTriggerBody0 === false) {
         if (body1.reportTrigger) registerEvent(triggerEnter, body1.id, body0.id)
-
-        // if ('enter' in body1 && (body0.id === body1.entity || body1.entity === constants.ENTITY_ANY)) {
-        //   globalEvents.push([body1.enter, body1.id, body0.id])
-        // }
       }
     // Handle collisions
     } else {
@@ -103,7 +92,7 @@ export const checkForCollisions = (
   }
 }
 
-export const cleanOldCollisions = (/* globalEvents: any[] */) => {
+export const cleanOldCollisions = () => {
   triggerLeave.clear()
   collisionEnd.clear()
 
@@ -118,9 +107,6 @@ export const cleanOldCollisions = (/* globalEvents: any[] */) => {
         if (body.trigger === true) {
           if (body.reportTrigger) registerEvent(triggerLeave, body.id, other.id)
 
-          // if (body.leave && (other.id === body.entity || body.entity === constants.ENTITY_ANY)) {
-          //   globalEvents.push([body.leave, body.id, other.id])
-          // }
         } else if (other.trigger === false) {
           if (body.reportCollision) registerEvent(collisionEnd, body.id, other.id)
         }
@@ -132,10 +118,18 @@ export const cleanOldCollisions = (/* globalEvents: any[] */) => {
     }
   }
 
-  return {
+  if (
+    triggerEnter.size === 0 &&
+    triggerLeave.size === 0 &&
+    collisionStart.size === 0 &&
+    collisionEnd.size === 0
+  ) return
+
+  postMessage({
+    event: 'collisions',
     triggerEnter: [...triggerEnter],
-    collisionStart: [...collisionStart],
     triggerLeave: [...triggerLeave],
-    collisionEnd: [...collisionEnd]
-  }
+    collisionStart: [...triggerEnter],
+    collisionEnd: [...collisionEnd],
+  })
 }

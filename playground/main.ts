@@ -1,7 +1,7 @@
 /**
  * This is how debugging should be imported to allow tree-shaking
  */
- if (import.meta.env.THREE_DEBUG === 'true') {
+if (import.meta.env.THREE_DEBUG === 'true') {
   await import('../src/debug')
 }
 
@@ -90,7 +90,7 @@ const main = async () => {
         transforms[i + 6] = Math.random() - 0.5
         transforms[i + 7] = 1
       }
-  
+
       ammo.setTransforms(transforms)
     }
   })
@@ -99,15 +99,12 @@ const main = async () => {
     {
       id: -2,
       shape: ammo.BODYSHAPE_BOX,
-      // enter: 'all',
-      // leave: 'all',
-      // entity: 0,
-      transform: new Float32Array([0, -50, 0, 0, 0, 0, 1]),
+      transform: new Float32Array([0, -2001, 0, 0, 0, 0, 1]),
       halfExtents: {
-        x: 500,
-        y: 1,
-        z: 500,
-      } 
+        x: 2000,
+        y: 2000,
+        z: 2000,
+      }
     }
   ])
 

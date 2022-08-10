@@ -47,6 +47,7 @@ export interface RigidBody {
   mass?: number
   restitution?: number
   friction?: number
+  rollingFriction?: number
   linearDamping?: number
   angularDamping?: number
   linkedId?: number
@@ -115,9 +116,6 @@ export type Body =
 export interface TriggerVolume {
   id: number
   shape: BodyShape
-  enter: string
-  leave: string
-  entity: number
   linkedRigidbodyId?: number
   transform: Float32Array
   halfExtents: Vector3
@@ -130,13 +128,3 @@ export interface BoxTriggerVolume extends TriggerVolume {
 
 export type Volume =
   | BoxTriggerVolume
-
-// export interface Terrain {
-//   width: number
-//   depth: number
-//   minHeight: number
-//   maxHeight: number
-//   widthExtents: number
-//   depthExtents: number
-//   heightData: Float32Array
-// }
