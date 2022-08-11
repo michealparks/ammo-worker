@@ -6,7 +6,7 @@ if (import.meta.env.THREE_DEBUG === 'true') {
 }
 
 import './index.css'
-import { run, update } from 'three-kit'
+import { run, update, renderer } from 'three-kit'
 import './lib/pane'
 import { ammo } from '../src/main'
 import * as physics from '../src/adapters/three'
@@ -17,6 +17,11 @@ const demos = import.meta.glob('./demos/*.ts')
 
 import './renderer'
 
+renderer.xr.addEventListener('sessionstart', () => {
+  const camera = renderer.xr.getCamera()
+  camera.position.set(0, 1.8, 1)
+  camera.scale.setScalar(5)
+})
 
 const main = async () => {
   await ammo.init()

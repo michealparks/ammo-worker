@@ -67,20 +67,11 @@ const raycast = async () => {
 
   const hit = await ammo.raycast(x, y, z, x, y, 10)
 
-  if (hit[0] > -1) {
-    addImpulses(hit[0])
+  if (hit) {
+    ammo.applyCentralImpulse(hit.id, 0, 0, 50)
   }
 
   setTimeout(() => { raycasting = false }, 100)
-}
-
-const addImpulses = (id: number) => {
-  const impulse = new Float32Array(4) 
-  impulse[0] = id
-  impulse[1] = 0
-  impulse[2] = 0
-  impulse[3] = 50
-  ammo.applyCentralImpulses(impulse)
 }
 
 const playerTransform = new Float32Array(8)

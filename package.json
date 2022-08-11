@@ -27,11 +27,8 @@
     "preview": "vite preview",
     "check": "tsc"
   },
-  "dependencies": {
-    "comlink": "^4.3.1"
-  },
   "devDependencies": {
-    "@react-three/drei": "^9.19.7",
+    "@react-three/drei": "^9.20.0",
     "@rollup/plugin-alias": "^3.1.9",
     "@rollup/plugin-replace": "^4.0.0",
     "@tweakpane/core": "^1.1.0",
@@ -39,7 +36,7 @@
     "@types/three": "^0.143.0",
     "@vitejs/plugin-basic-ssl": "^0.1.1",
     "ammo.js": "github:kripken/ammo.js",
-    "nice-color-palettes": "^2.0.0",
+    "nice-color-palettes": "^3.0.0",
     "postprocessing": "^6.28.5",
     "rollup": "^2.77.2",
     "rollup-plugin-copy": "^3.4.0",
@@ -50,6 +47,6 @@
     "tslib": "^2.4.0",
     "tweakpane": "^3.1.0",
     "typescript": "^4.7.4",
-    "vite": "^3.0.4"
+    "vite": "^3.0.5"
   }
 }

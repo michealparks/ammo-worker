@@ -1,4 +1,5 @@
 import * as constants from '../constants'
+import * as events from '../constants/events'
 import type { AmmoLib, Body } from '../types'
 
 const collisions = new Map()
@@ -40,7 +41,6 @@ const registerEvent = (events: Map<number, any[]>, id: number, data: unknown) =>
   events.get(id)!.push(data)
 }
 
-
 const collisionIds = new Uint16Array(Number.parseInt(import.meta.env.AMMO_COLLISION_BUFFER_SIZE, 10))
 const triggerIds = new Uint16Array(Number.parseInt(import.meta.env.AMMO_COLLISION_BUFFER_SIZE, 10))
 let collisionCursor = 0
@@ -69,7 +69,7 @@ export const checkCollisions = (
     const isTriggerBody1 = (body1.getCollisionFlags() & constants.BODYFLAG_NORESPONSE_OBJECT) === constants.BODYFLAG_NORESPONSE_OBJECT
 
     if (isTriggerBody0) {
-      triggerIds[triggerCursor] = body0
+      triggerIds[triggerCursor] = body0.id
 
     }
   }
@@ -173,7 +173,7 @@ export const cleanOldCollisions = () => {
   ) return
 
   postMessage({
-    event: 'collisions',
+    event: events.COLLISIONS,
     triggerEnter: [...triggerEnter],
     triggerLeave: [...triggerLeave],
     collisionStart: [...triggerEnter],

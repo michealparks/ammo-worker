@@ -1,6 +1,6 @@
 import AmmoModule from './ammo'
-import * as Comlink from 'comlink'
 import * as constants from './constants'
+import * as events from './constants/events'
 import type { AmmoLib, Flag, Body, TriggerVolume } from './types'
 import { createBody } from './lib/create-body'
 import { createTrigger } from './lib/create-trigger'
@@ -60,6 +60,8 @@ const init = async () => {
     //   drawer.setDebugMode(mode)
     // }, 1000)
   }
+
+  postMessage({ event: events.INIT })
 }
 
 /**
@@ -86,16 +88,85 @@ const setFriction = (id: number, friction: number) => {
   body.setFriction(friction)
 }
 
-const setTransform = (bodyTransform: Float32Array, shift = 0) => {
-  const body = bodies.get(bodyTransform[0])!
+/**
+ * Setting the collision mask sets which groups this body collides with. It is a bitfield of 16 bits,
+ * the first 8 bits are reserved for engine use.
+ *
+ * @param id - The id of the body
+ * @param mask - The collision mask
+ */
+const setMask = (id: number, mask: number) => {
+  const body = bodies.get(id)!
+  body.mask = mask
+
+  // re-enabling simulation adds rigidbody back into world with new masks
+  world.removeRigidBody(body)
+  world.addRigidBody(body, body.group, mask)
+}
+
+/**
+ * Set the mass of the body. This is only relevant for {@link constants.BODYTYPE_DYNAMIC} bodies, other types
+ * have infinite mass.
+ *
+ * @param id - The id of the body
+ * @param mass - The new mass
+ */
+const setMass = (id: number, mass: number) => {
+  const body = bodies.get(id)!
+
+  world.removeRigidBody(body)
+  body.getCollisionShape().calculateLocalInertia(mass, vec)
+  body.setMassProps(mass, vec)
+  body.updateInertiaTensor()
+  world.addRigidBody(body, body.group, body.mask)
+}
+
+const setPosition = (id: number, x: number, y: number, z: number) => {
+  const body = bodies.get(id)!
   body.activate()
 
   vec.setValue(0, 0, 0)
   body.setAngularVelocity(vec)
 	body.setLinearVelocity(vec)
 
-  vec.setValue(bodyTransform[shift + 1], bodyTransform[shift + 2], bodyTransform[shift + 3])
-  quat.setValue(bodyTransform[shift + 4], bodyTransform[shift + 5], bodyTransform[shift + 6], bodyTransform[shift + 7])
+  vec.setValue(x, y, z)
+  const transform = body.getWorldTransform()
+  transform.setOrigin(vec)
+  body.setWorldTransform(transform)
+
+  if (body.type === constants.BODYTYPE_KINEMATIC) {
+    body.getMotionState().setWorldTransform(transform)
+  }
+}
+
+const setRotation = (id: number, x: number, y: number, z: number, w: number) => {
+  const body = bodies.get(id)!
+  body.activate()
+
+  vec.setValue(0, 0, 0)
+  body.setAngularVelocity(vec)
+	body.setLinearVelocity(vec)
+
+  quat.setValue(x, y, z, w)
+  const transform = body.getWorldTransform()
+  transform.setRotation(quat)
+  body.setWorldTransform(transform)
+
+  if (body.type === constants.BODYTYPE_KINEMATIC) {
+    body.getMotionState().setWorldTransform(transform)
+  }
+}
+
+const setTransform = (id: number, x: number, y: number, z: number, qx: number, qy: number, qz: number, qw: number) => {
+  const body = bodies.get(id)!
+  body.activate()
+
+  vec.setValue(0, 0, 0)
+  body.setAngularVelocity(vec)
+	body.setLinearVelocity(vec)
+
+  vec.setValue(x, y, z)
+  quat.setValue(qx, qy, qz, qw)
   transform.setOrigin(vec)
   transform.setRotation(quat) 
   body.setWorldTransform(transform)
@@ -106,45 +177,17 @@ const setTransform = (bodyTransform: Float32Array, shift = 0) => {
 }
 
 /**
- * Setting the collision mask sets which groups this body collides with. It is a bitfield of 16 bits,
- * the first 8 bits are reserved for engine use. Defaults to 65535.
- *
- * @param id - The id of the body
- * @param mask - The collision mask
- */
-const setMask = (id: number, mask: number = 65535) => {
-  const body = bodies.get(id)!
-
-  // re-enabling simulation adds rigidbody back into world with new masks
-  world.removeRigidBody(body)
-  world.addRigidBody(body, body.group, mask)
-}
-
-/**
- * Set the mass of the body. This is only relevant for {@link constants.BODYTYPE_DYNAMIC} bodies, other types
- * have infinite mass. Defaults to 1.
- *
- * @param {number} id - The id of the body
- * @param {number} mass - The new mass
- */
-const setMass = (id: number, mass: number = 1) => {
-  const body = bodies.get(id)!
-
-  disableSimulation(id)
-  body.getCollisionShape().calculateLocalInertia(mass, vec)
-  body.setMassProps(mass, vec)
-  body.updateInertiaTensor()
-  enableSimulation(id)
-}
-
-/**
  * Sets the transform for many bodies. The array is offset by 8. The first index of every 8 slots is the object id,
  * the next three slots are position, and the last four slots are a quaternion representing rotation.
  * @param transforms - An array of ids and transforms.
  */
 const setTransforms = (transforms: Float32Array) => {
   for (let shift = 0, l = transforms.length; shift < l; shift += 8) {
-    setTransform(transforms, shift)
+    setTransform(
+      transforms[shift + 0],
+      transforms[shift + 1], transforms[shift + 2], transforms[shift + 3],
+      transforms[shift + 4], transforms[shift + 5], transforms[shift + 6], transforms[shift + 7]
+    )
   }
 }
 
@@ -162,24 +205,27 @@ const createRigidBodies = (objects: Body[]) => {
       flag = constants.BODYFLAG_STATIC_OBJECT
       body = createBody(ammo, data, inertia, flag)
       body.group = constants.BODYGROUP_STATIC
-      world.addRigidBody(body, constants.BODYGROUP_STATIC, constants.BODYMASK_NOT_STATIC)
+      body.mask = constants.BODYMASK_NOT_STATIC
+      world.addRigidBody(body, body.group, body.mask)
       break
     case constants.BODYTYPE_DYNAMIC:
       inertia = true //  data.sprite === false && data.mass !== 0
       flag = undefined
       body = createBody(ammo, data, inertia, flag)
       body.group = constants.BODYGROUP_DYNAMIC
+      body.mask = constants.BODYMASK_ALL
       dynamicBodies.add(body)
       
-      world.addRigidBody(body, constants.BODYGROUP_DYNAMIC, constants.BODYMASK_ALL)
+      world.addRigidBody(body, body.group, body.mask)
       break
     case constants.BODYTYPE_KINEMATIC:
       inertia = false
       flag = constants.BODYFLAG_KINEMATIC_OBJECT
       body = createBody(ammo, data, inertia, flag)
       body.group = constants.BODYGROUP_KINEMATIC
+      body.mask = constants.BODYMASK_ALL
       body.setActivationState(constants.BODYSTATE_DISABLE_DEACTIVATION)
-      world.addRigidBody(body, constants.BODYGROUP_KINEMATIC, constants.BODYMASK_ALL)
+      world.addRigidBody(body, body.group, body.mask)
       break
     }
 
@@ -227,14 +273,22 @@ const createTriggers = (objects: TriggerVolume[]) => {
  */
 const run = () => {
   now = then = performance.now()
-  tickId = requestAnimationFrame(tick)
+  if (import.meta.env.THREE_XR === 'true') {
+    tickId = self.setInterval(tick, 1000 / 90)
+  } else {
+    tickId = requestAnimationFrame(tick)
+  }
 }
 
 /**
  * Pause the simulation
  */
 const pause = () => {
-  cancelAnimationFrame(tickId)
+  if (import.meta.env.THREE_XR === 'true') {
+    clearInterval(tickId)
+  } else {
+    cancelAnimationFrame(tickId)
+  }
 }
 
 const transforms = new Float32Array(Number.parseInt(import.meta.env.AMMO_MAX_BODIES, 10) * 7)
@@ -242,7 +296,10 @@ const maxSubsteps = Number.parseInt(import.meta.env.AMMO_MAX_SUBSTEPS, 10)
 const fixedTimestep = Number.parseFloat(import.meta.env.AMMO_FIXED_TIMESTEP)
 
 const tick = () => {
-  tickId = requestAnimationFrame(tick)
+  if (import.meta.env.THREE_XR !== 'true') {
+    tickId = requestAnimationFrame(tick)
+  }
+
   now = performance.now()
   dt = (now - then) / 1000
   fps = 1000 / (now - then)
@@ -283,7 +340,7 @@ const tick = () => {
 if (import.meta.env.AMMO_DEBUG === 'true') {
   setInterval(() => {
     postMessage({
-      event: 'fps',
+      event: events.FPS,
       fps,
     })
   }, 1000)
@@ -432,58 +489,74 @@ const disableSimulation = (id: number) => {
   body.forceActivationState(constants.BODYSTATE_DISABLE_SIMULATION)
 }
 
-const hit = new Float32Array(7)
-
-/**
- * Raycast the world and return the first entity the ray hits. Fire a ray into the world from
- * start to end, if the ray hits an entity with a collision component, it returns a result.
- * 
- * @param data The two / from 3d points as Float32Array([x1, y1, z1, x2, y2, z2])
- * @returns An id and hit 3d position as Float32Array([id, x, y, z])
- */
-const raycast = (data: Float32Array) => {
-  vec.setValue(data[0], data[1], data[2])
-  vec2.setValue(data[3], data[4], data[5])
+const raycast = (x1: number, y1: number, z1: number, x2: number, y2: number, z2: number) => {
+  vec.setValue(x1, y1, z1)
+  vec2.setValue(x2, y2, z2)
   const rayCallback = new ammo.ClosestRayResultCallback(vec, vec2);
 
   world.rayTest(vec, vec2, rayCallback)
-
-  hit[0] = -1
 
   if (rayCallback.hasHit()) {
     const object = rayCallback.m_collisionObject
     const body = ammo.castObject(object, ammo.btRigidBody)
     const point = rayCallback.m_hitPointWorld
     const normal = rayCallback.m_hitNormalWorld
-    hit[0] = body.id
-    hit[1] = point.x()
-    hit[2] = point.y()
-    hit[3] = point.z()
-    hit[4] = normal.x()
-    hit[5] = normal.y()
-    hit[6] = normal.z()
+
+    return postMessage({
+      event: events.RAYCAST,
+      hit: {
+        id: body.id,
+        x: point.x(),
+        y: point.y(),
+        z: point.z(),
+        nx: normal.x(),
+        ny: normal.y(),
+        nz: normal.z(),
+      }
+    })
   }
 
-  return hit
+  return postMessage({ event: events.RAYCAST })
 }
 
+self.addEventListener('message', ({ data }) => {
+  switch (data.event) {
+    case events.SET_POSITION:
+      return setPosition(data.id, data.x, data.y, data.z)
+    case events.SET_TRANSFORMS:
+      return setTransforms(data.transforms)
+    case events.APPLY_CENTRAL_IMPULSE:
+      return applyCentralImpulse(data.id, data.x, data.y, data.z)
+    case events.APPLY_CENTRAL_IMPULSES:
+      return applyCentralImpulses(data.impulses)
+    case events.APPLY_CENTRAL_FORCES:
+      return applyCentralForces(data.forces)
+    case events.RAYCAST:
+      return raycast(data.x1, data.y1, data.z1, data.x2, data.y2, data.z2)
+    case events.CREATE_RIGIDBODIES:
+      return createRigidBodies(data.bodies)
+    case events.CREATE_TRIGGERS:
+      return createTriggers(data.triggers)
+    case events.SET_GRAVITY:
+      return setGravity(data.x, data.y, data.z)
+    case events.SET_FRICTION:
+      return setFriction(data.id, data.friction)
+    case events.SET_MASK:
+      return setMask(data.id, data.mask)
+    case events.SET_MASS:
+      return setMass(data.id, data.mass)
+    case events.RUN:
+      return run()
+    case events.PAUSE:
+      return pause()
+    case events.INIT:
+      return init()
+  }
+
+  throw new Error(data)
+})
+
 export const api = {
-  init,
-  run,
-  pause,
-  setGravity,
-  setMask,
-  setMass,
-  setFriction,
-  setTransform,
-  setTransforms,
-  createRigidBodies,
-  destroyRigidBody,
-  destroyRigidBodies,
-  destroyAllRigidBodies,
-  createTriggers,
-  applyCentralImpulse,
-  applyCentralImpulses,
   applyTorque,
   applyTorqueImpulse,
   applyForce,
@@ -495,5 +568,3 @@ export const api = {
   activate,
   raycast,
 }
-
-Comlink.expose(api)

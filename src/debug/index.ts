@@ -18,12 +18,17 @@ scene.add = (...args) => {
 const pane = debug.addPane('physics')
 const parameters = {
   draw: false,
+  gravity: Number.parseFloat(import.meta.env.AMMO_DEFAULT_GRAVITY),
   collisionStart: '',
   triggerEnter: '',
 }
 
 pane.addInput(parameters, 'draw').on('change', () => {
 
+})
+
+pane.addInput(parameters, 'gravity').on('change', () => {
+  ammo.setGravity(0, parameters.gravity, 0)
 })
 
 const collisionFolder = debug.addFolder(pane, 'collisions')
@@ -39,10 +44,6 @@ collisionFolder.addMonitor(parameters, 'triggerEnter', {
   lineCount: 10,
   interval: 30,
 })
-
-const statsParams = {
-  physics: 0
-}
 
 debug.stats.addMonitor(ammo, 'fps', {
   label: 'physics fps',
