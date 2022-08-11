@@ -4,7 +4,7 @@ import * as constants from './constants'
 import type { AmmoLib, Flag, Body, TriggerVolume } from './types'
 import { createBody } from './lib/create-body'
 import { createTrigger } from './lib/create-trigger'
-import { checkForCollisions, cleanOldCollisions } from './lib/collisions'
+import { checkForCollisions } from './lib/collisions'
 
 let ammo: AmmoLib
 let vec: Ammo.btVector3
@@ -12,10 +12,6 @@ let vec2: Ammo.btVector3
 let quat: Ammo.btQuaternion
 let transform: Ammo.btTransform
 let world: Ammo.btDiscreteDynamicsWorld
-
-let rayOrigin: Ammo.btVector3
-let rayDestination: Ammo.btVector3
-let rayCallback: Ammo.ClosestRayResultCallback
 
 let now = 0
 let dt = 0
@@ -37,10 +33,6 @@ const init = async () => {
   quat = new ammo.btQuaternion(0, 0, 0, 1)
   transform = new ammo.btTransform()
 
-  rayOrigin = new ammo.btVector3()
-  rayDestination = new ammo.btVector3()
-  rayCallback = new ammo.ClosestRayResultCallback(rayOrigin, rayDestination)
-
   const collisionConfiguration = new ammo.btDefaultCollisionConfiguration()
   const dispatcher = new ammo.btCollisionDispatcher(collisionConfiguration)
   const pairCache = new ammo.btDbvtBroadphase()
@@ -53,6 +45,8 @@ const init = async () => {
     solver,
     collisionConfiguration
   )
+  const checkForCollisionsPointer = ammo.addFunction(checkForCollisions.bind(null, ammo), 'vif')
+  world.setInternalTickCallback(checkForCollisionsPointer)
 
   setGravity(0, Number.parseFloat(import.meta.env.AMMO_DEFAULT_GRAVITY), 0)
 
@@ -68,11 +62,24 @@ const init = async () => {
   }
 }
 
+/**
+ * Set the gravity for the physics world.
+ * 
+ * @param x - The x component
+ * @param y - The y component
+ * @param z - The z component
+ */
 const setGravity = (x: number, y: number, z: number) => {
   vec.setValue(x, y, z)
   world.setGravity(vec)
 }
 
+/**
+ * Set the friction for a body.
+ * 
+ * @param id - The id of the body
+ * @param friction - The friction for the body
+ */
 const setFriction = (id: number, friction: number) => {
   const body = bodies.get(id)!
   body.activate()
@@ -102,10 +109,10 @@ const setTransform = (bodyTransform: Float32Array, shift = 0) => {
  * Setting the collision mask sets which groups this body collides with. It is a bitfield of 16 bits,
  * the first 8 bits are reserved for engine use. Defaults to 65535.
  *
- * @param {number} - The id of the body
- * @param {number}
+ * @param id - The id of the body
+ * @param mask - The collision mask
  */
-const setMask = (id: number, mask: number) => {
+const setMask = (id: number, mask: number = 65535) => {
   const body = bodies.get(id)!
 
   // re-enabling simulation adds rigidbody back into world with new masks
@@ -130,6 +137,11 @@ const setMass = (id: number, mass: number = 1) => {
   enableSimulation(id)
 }
 
+/**
+ * Sets the transform for many bodies. The array is offset by 8. The first index of every 8 slots is the object id,
+ * the next three slots are position, and the last four slots are a quaternion representing rotation.
+ * @param transforms - An array of ids and transforms.
+ */
 const setTransforms = (transforms: Float32Array) => {
   for (let shift = 0, l = transforms.length; shift < l; shift += 8) {
     setTransform(transforms, shift)
@@ -175,6 +187,32 @@ const createRigidBodies = (objects: Body[]) => {
   }
 }
 
+const destroyRigidBody = (body: Ammo.btRigidBody) => {
+  const motionState = body.getMotionState()
+
+  if (motionState) {
+    ammo.destroy(motionState)
+  }
+
+  ammo.destroy(body)
+}
+
+const destroyRigidBodies = (ids: Uint16Array) => {
+  for (let i = 0, l = ids.length, id = 0; i < l; i += 1, id = ids[i]) {
+    destroyRigidBody(bodies.get(id)!)
+    bodies.delete(id)
+  }
+}
+
+const destroyAllRigidBodies = () => {
+  for (const [id] of bodies) {
+    destroyRigidBody(bodies.get(id)!)
+  }
+
+  bodies.clear()
+  dynamicBodies.clear()
+}
+
 const createTriggers = (objects: TriggerVolume[]) => {
   for (let i = 0, l = objects.length; i < l; i += 1) {
     const data = objects[i]
@@ -184,11 +222,17 @@ const createTriggers = (objects: TriggerVolume[]) => {
   }
 }
 
+/**
+ * Resume the simulation.
+ */
 const run = () => {
   now = then = performance.now()
   tickId = requestAnimationFrame(tick)
 }
 
+/**
+ * Pause the simulation
+ */
 const pause = () => {
   cancelAnimationFrame(tickId)
 }
@@ -205,9 +249,6 @@ const tick = () => {
   then = now
 
   world.stepSimulation(dt, maxSubsteps, fixedTimestep)
-
-  checkForCollisions(ammo, world)
-  cleanOldCollisions()
 
   let index = 0
   let shift = 0
@@ -248,11 +289,25 @@ if (import.meta.env.AMMO_DEBUG === 'true') {
   }, 1000)
 }
 
+/**
+ * Apply a central impulse to a body.
+ * 
+ * @param id - The id of the body
+ * @param x - The x component of the impulse.
+ * @param y - The y component of the impulse.
+ * @param z - The z component of the impulse.
+ */
 const applyCentralImpulse = (id: number, x: number, y: number, z: number) => {
   const body = bodies.get(id)!
   body.activate()
   vec.setValue(x, y, z)
   body.applyCentralImpulse(vec)
+}
+
+const applyCentralImpulses = (impulses: Float32Array) => {
+  for (let shift = 0, length = impulses.length; shift < length; shift += 4) {
+    applyCentralImpulse(impulses[shift + 0], impulses[shift + 1], impulses[shift + 2], impulses[shift + 3])
+  }
 }
 
 /**
@@ -283,12 +338,6 @@ const applyTorque = (id: number, x: number, y: number, z: number) => {
   body.activate()
   vec.setValue(x, y, z)
   body.applyTorque(vec)
-}
-
-const applyCentralImpulses = (impulses: Float32Array) => {
-  for (let shift = 0, length = impulses.length; shift < length; shift += 4) {
-    applyCentralImpulse(impulses[shift + 0], impulses[shift + 1], impulses[shift + 2], impulses[shift + 3])
-  }
 }
 
 /**
@@ -327,6 +376,31 @@ const applyCentralForces = (forces: Float32Array) => {
   }
 }
 
+/**
+ * Returns true if the rigid body is currently actively being simulated. I.e. Not 'sleeping'.
+ *
+ * @param id - The id of the body
+ * @returns True if the body is active.
+ */
+const isActive = (id: number): boolean => {
+  return bodies.get(id)!.isActive()
+}
+
+/**
+ * Forcibly activate the rigid body simulation. Only affects rigid bodies of type
+ * {@link constants.BODYTYPE_DYNAMIC}.
+ *
+ * @param id - The id of the body
+ */
+const activate = (id: number) => {
+  bodies.get(id)!.activate()
+}
+
+/**
+ * Enable simulation for an object
+ * 
+ * @param id - The id of the body
+ */
 const enableSimulation = (id: number) => {
   const body = bodies.get(id)!
 
@@ -346,25 +420,10 @@ const enableSimulation = (id: number) => {
 }
 
 /**
- * Returns true if the rigid body is currently actively being simulated. I.e. Not 'sleeping'.
- *
- * @param {number} id - The id of the body
- * @returns {boolean} True if the body is active.
+ * Disabled the simulation for a body
+ * 
+ * @param id - The id of the body
  */
-const isActive = (id: number): boolean => {
-  return bodies.get(id)!.isActive()
-}
-
-/**
- * Forcibly activate the rigid body simulation. Only affects rigid bodies of type
- * {@link constants.BODYTYPE_DYNAMIC}.
- *
- * @param {number} id - The id of the body
- */
-const activate = (id: number) => {
-  bodies.get(id)!.activate()
-}
-
 const disableSimulation = (id: number) => {
   const body = bodies.get(id)!
 
@@ -373,35 +432,36 @@ const disableSimulation = (id: number) => {
   body.forceActivationState(constants.BODYSTATE_DISABLE_SIMULATION)
 }
 
-const hit = new Float32Array(4)
+const hit = new Float32Array(7)
+
+/**
+ * Raycast the world and return the first entity the ray hits. Fire a ray into the world from
+ * start to end, if the ray hits an entity with a collision component, it returns a result.
+ * 
+ * @param data The two / from 3d points as Float32Array([x1, y1, z1, x2, y2, z2])
+ * @returns An id and hit 3d position as Float32Array([id, x, y, z])
+ */
 const raycast = (data: Float32Array) => {
-  // @TODO remove ignores
-  // @ts-ignore
-  const ray = ammo.castObject(rayCallback, ammo.RayResultCallback)
-  // @ts-ignore
-  ray.set_m_closestHitFraction(1)
-  // @ts-ignore
-  ray.set_m_collisionObject(null)
+  vec.setValue(data[0], data[1], data[2])
+  vec2.setValue(data[3], data[4], data[5])
+  const rayCallback = new ammo.ClosestRayResultCallback(vec, vec2);
 
-  rayOrigin.setValue(data[0], data[1], data[2])
-  rayDestination.setValue(data[3], data[4], data[5])
-  // @ts-ignore
-  rayCallback.get_m_rayFromWorld().setValue(data[0], data[1], data[2])
-  // @ts-ignore
-  rayCallback.get_m_rayToWorld().setValue(data[3], data[4], data[5])
-
-  world.rayTest(rayOrigin, rayDestination, rayCallback)
+  world.rayTest(vec, vec2, rayCallback)
 
   hit[0] = -1
 
   if (rayCallback.hasHit()) {
     const object = rayCallback.m_collisionObject
     const body = ammo.castObject(object, ammo.btRigidBody)
-    const point = rayCallback.m_hitPointWorld // .get_m_hitPointWorld()
+    const point = rayCallback.m_hitPointWorld
+    const normal = rayCallback.m_hitNormalWorld
     hit[0] = body.id
     hit[1] = point.x()
     hit[2] = point.y()
     hit[3] = point.z()
+    hit[4] = normal.x()
+    hit[5] = normal.y()
+    hit[6] = normal.z()
   }
 
   return hit
@@ -418,6 +478,9 @@ export const api = {
   setTransform,
   setTransforms,
   createRigidBodies,
+  destroyRigidBody,
+  destroyRigidBodies,
+  destroyAllRigidBodies,
   createTriggers,
   applyCentralImpulse,
   applyCentralImpulses,

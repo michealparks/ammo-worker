@@ -40,10 +40,47 @@ const registerEvent = (events: Map<number, any[]>, id: number, data: unknown) =>
   events.get(id)!.push(data)
 }
 
-export const checkForCollisions = (
+
+const collisionIds = new Uint16Array(Number.parseInt(import.meta.env.AMMO_COLLISION_BUFFER_SIZE, 10))
+const triggerIds = new Uint16Array(Number.parseInt(import.meta.env.AMMO_COLLISION_BUFFER_SIZE, 10))
+let collisionCursor = 0
+let triggerCursor = 0
+
+export const checkCollisions = (
   ammo: AmmoLib,
   world: Ammo.btDiscreteDynamicsWorld
 ) => {
+  collisionCursor = 0
+  triggerCursor = 0
+
+  const dispatcher = world.getDispatcher()
+  const numManifolds = dispatcher.getNumManifolds()
+
+  for (let index = 0; index < numManifolds; index += 1) {
+    const manifold = dispatcher.getManifoldByIndexInternal(index)
+    const numContacts = manifold.getNumContacts()
+
+    if (numContacts === 0) continue
+
+    const body0 = ammo.castObject(manifold.getBody0(), ammo.btRigidBody)
+    const body1 = ammo.castObject(manifold.getBody1(), ammo.btRigidBody)
+
+    const isTriggerBody0 = (body0.getCollisionFlags() & constants.BODYFLAG_NORESPONSE_OBJECT) === constants.BODYFLAG_NORESPONSE_OBJECT
+    const isTriggerBody1 = (body1.getCollisionFlags() & constants.BODYFLAG_NORESPONSE_OBJECT) === constants.BODYFLAG_NORESPONSE_OBJECT
+
+    if (isTriggerBody0) {
+      triggerIds[triggerCursor] = body0
+
+    }
+  }
+}
+
+export const checkForCollisions = (
+  ammo: AmmoLib,
+  dynamicsWorld: Ammo.btDiscreteDynamicsWorld
+) => {
+  const world = ammo.wrapPointer(dynamicsWorld, ammo.btDynamicsWorld);
+
   triggerEnter.clear()
   collisionStart.clear()
   frameCollisions.clear()
@@ -59,11 +96,19 @@ export const checkForCollisions = (
 
     const body0 = ammo.castObject(manifold.getBody0(), ammo.btRigidBody)
     const body1 = ammo.castObject(manifold.getBody1(), ammo.btRigidBody)
-
+    
     let isNewCollision = false
 
     const isTriggerBody0 = (body0.getCollisionFlags() & constants.BODYFLAG_NORESPONSE_OBJECT) === constants.BODYFLAG_NORESPONSE_OBJECT
     const isTriggerBody1 = (body1.getCollisionFlags() & constants.BODYFLAG_NORESPONSE_OBJECT) === constants.BODYFLAG_NORESPONSE_OBJECT
+
+    // if (isTriggerBody0) {
+    //   console.log('triggerBody0', numContacts)
+    // }
+
+    // if (isTriggerBody1) {
+    //   console.log('triggerBody1', numContacts)
+    // }
 
     // TODO only store, report collisions if event is present
     // Handle triggers
@@ -90,6 +135,8 @@ export const checkForCollisions = (
       }
     }
   }
+
+  cleanOldCollisions()
 }
 
 export const cleanOldCollisions = () => {
