@@ -115,10 +115,12 @@ export const addInstancedMesh = (mesh: THREE.InstancedMesh, data: Partial<Body>)
   dynamicBodyMeshes.add(mesh)
 
   const bodies: Body[] = []
+  const ids = []
 
   for (let index = 0, length = mesh.count; index < length; index += 1) {
     id += 1
 
+    ids.push(id)
     if (data.type === constants.BODYTYPE_DYNAMIC) {
       instancedMeshMap.set(id, { mesh, index })
     }
@@ -130,33 +132,35 @@ export const addInstancedMesh = (mesh: THREE.InstancedMesh, data: Partial<Body>)
     })
   }
 
-  return ammo.createRigidBodies(bodies)
+  ammo.createRigidBodies(bodies)
+
+  return ids
 }
 
 export const computeScale = (matrixWorld: Float32Array) => {
-  scale.set(1, 1, 1)
+  scale.setScalar(1)
   matrix.fromArray(matrixWorld)
   scale.setFromMatrixScale(matrix)
 
   return { x: scale.x, y: scale.y, z: scale.z }
 }
 
-export const destroyAll = () => {
-
-}
-
-ammo.on('tick', (transforms) => {
+ammo.on('tick', (transforms: Float32Array) => {
   let shift = 0
+
+  scale.setScalar(1)
 
   for (const mesh of dynamicBodyMeshes) {
     if ('isInstancedMesh' in mesh) {
       for (let index = 0, count = mesh.count; index < count; index += 1) {
+        vec3.set(transforms[shift + 0], transforms[shift + 1], transforms[shift + 2])
         quat.set(transforms[shift + 3], transforms[shift + 4], transforms[shift + 5], transforms[shift + 6])
-        matrix.makeRotationFromQuaternion(quat)
-        matrix.setPosition(transforms[shift + 0], transforms[shift + 1], transforms[shift + 2])
+        // @TODO support scaling
+        matrix.compose(vec3, quat, scale)
         mesh.setMatrixAt(index, matrix)
         shift += 7
       }
+
       mesh.instanceMatrix.needsUpdate = true
     } else {
       mesh.position.set(transforms[shift + 0], transforms[shift + 1], transforms[shift + 2])

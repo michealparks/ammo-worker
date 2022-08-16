@@ -121,6 +121,14 @@ const setMass = (id: number, mass: number) => {
   world.addRigidBody(body, body.group, body.mask)
 }
 
+/**
+ * Sets the position component of a body's transform.
+ * 
+ * @param id The body id
+ * @param x The x component
+ * @param y The y component
+ * @param z The z component
+ */
 const setPosition = (id: number, x: number, y: number, z: number) => {
   const body = bodies.get(id)!
   body.activate()
@@ -318,7 +326,7 @@ const tick = () => {
 
     const motionState = body.getMotionState()
     motionState.getWorldTransform(transform)
-    
+
     const position = transform.getOrigin()
     const rotation = transform.getRotation()
 
@@ -361,6 +369,11 @@ const applyCentralImpulse = (id: number, x: number, y: number, z: number) => {
   body.applyCentralImpulse(vec)
 }
 
+/**
+ * Apply multiple central impulses to multiple bodies.
+ * 
+ * @param impulses A Float32Array of ids and impulses.
+ */
 const applyCentralImpulses = (impulses: Float32Array) => {
   for (let shift = 0, length = impulses.length; shift < length; shift += 4) {
     applyCentralImpulse(impulses[shift + 0], impulses[shift + 1], impulses[shift + 2], impulses[shift + 3])

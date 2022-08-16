@@ -70,17 +70,17 @@ export interface BoxRigidBody extends BoxLikeRigidBody {
 
 export interface CapsuleRigidBody extends BoxLikeRigidBody {
   shape: typeof constants.BODYSHAPE_CAPSULE
-  cylinderAxis: Axis
+  cylinderAxis?: Axis
 }
 
 export interface ConeRigidBody extends BoxLikeRigidBody {
   shape: typeof constants.BODYSHAPE_CONE
-  cylinderAxis: Axis
+  cylinderAxis?: Axis
 }
 
 export interface CylinderRigidBody extends BoxLikeRigidBody {
   shape: typeof constants.BODYSHAPE_CYLINDER
-  cylinderAxis: Axis
+  cylinderAxis?: Axis
 }
 
 export interface HeightfieldTerrainRigidBody extends RigidBody {
