@@ -9,6 +9,13 @@ export type AmmoLib = typeof Ammo & {
   PHY_FLOAT: number
 }
 
+export type ActivationStates =
+  | typeof constants.BODYSTATE_ACTIVE_TAG
+  | typeof constants.BODYSTATE_ISLAND_SLEEPING
+  | typeof constants.BODYSTATE_WANTS_DEACTIVATION
+  | typeof constants.BODYSTATE_DISABLE_DEACTIVATION
+  | typeof constants.BODYSTATE_DISABLE_SIMULATION
+
 export type BodyShape = 
   | typeof constants.BODYSHAPE_BOX
   | typeof constants.BODYSHAPE_CAPSULE
@@ -44,6 +51,7 @@ export interface RigidBody {
   id: number
   type: BodyType
   shape: BodyShape
+  activationState?: ActivationStates
   mass?: number
   restitution?: number
   friction?: number

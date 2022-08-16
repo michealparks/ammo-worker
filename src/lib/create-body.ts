@@ -87,5 +87,11 @@ export const createBody = (ammo: AmmoLib, data: Body, inertia: boolean, flag?: F
     ammo.destroy(localInertia)
   }
 
+  if (type === constants.BODYTYPE_KINEMATIC) {
+    rigidbody.setActivationState(constants.BODYSTATE_DISABLE_DEACTIVATION)
+  } else if (data.activationState) {
+    rigidbody.setActivationState(data.activationState)
+  }
+
   return rigidbody
 }

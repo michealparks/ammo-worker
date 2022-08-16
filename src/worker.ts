@@ -223,7 +223,6 @@ const createRigidBodies = (objects: Body[]) => {
       body.group = constants.BODYGROUP_DYNAMIC
       body.mask = constants.BODYMASK_ALL
       dynamicBodies.add(body)
-      
       world.addRigidBody(body, body.group, body.mask)
       break
     case constants.BODYTYPE_KINEMATIC:
@@ -232,7 +231,6 @@ const createRigidBodies = (objects: Body[]) => {
       body = createBody(ammo, data, inertia, flag)
       body.group = constants.BODYGROUP_KINEMATIC
       body.mask = constants.BODYMASK_ALL
-      body.setActivationState(constants.BODYSTATE_DISABLE_DEACTIVATION)
       world.addRigidBody(body, body.group, body.mask)
       break
     }
