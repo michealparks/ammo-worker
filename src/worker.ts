@@ -534,6 +534,8 @@ self.addEventListener('message', ({ data }) => {
   switch (data.event) {
     case events.SET_POSITION:
       return setPosition(data.id, data.x, data.y, data.z)
+    case events.SET_TRANSFORM:
+      return setTransform(data.id, data.x, data.y, data.z, data.qx, data.qy, data.qz, data.qw)
     case events.SET_TRANSFORMS:
       return setTransforms(data.transforms)
     case events.APPLY_CENTRAL_IMPULSE:

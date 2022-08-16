@@ -97,6 +97,10 @@ const setPosition = (id: number, x: number, y: number, z: number) => {
   worker.postMessage({ event: events.SET_POSITION, id, x, y, z })
 }
 
+const setTransform = (id: number, x: number, y: number, z: number, qx: number, qy: number, qz: number, qw: number) => {
+  worker.postMessage({ event: events.SET_TRANSFORM, id, x, y, z, qx, qy, qz, qw })
+}
+
 const setTransforms = (transforms: Float32Array) => {
   worker.postMessage({ event: events.SET_TRANSFORMS, transforms })
 }
@@ -162,6 +166,7 @@ export const ammo = {
   setMask,
   setMass,
   setPosition,
+  setTransform,
   setTransforms,
   createRigidBodies,
   createTriggers,
