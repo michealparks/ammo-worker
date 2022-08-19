@@ -6,6 +6,8 @@ export { computeShape } from './lib/compute-shape'
 
 type Callback = (data: any) => void
 
+let cid = 0
+
 const tickCallbacks = new Set<Callback>()
 const collisionCallbacks = new Set<Callback>()
 
@@ -43,11 +45,27 @@ worker.addEventListener('message', ({ data }) => {
       ammo.fps = data.fps
       return
     case events.RAYCAST:
-      return promises.get(events.RAYCAST)(data.hit)
+    case events.DESTROY_RIGIDBODIES:
+    case events.DESTROY_ALL_RIGIDBODIES:
     case events.INIT:
-      return promises.get(events.INIT)()
+    case events.RUN:
+    case events.PAUSE:
+      return execPromise(data)
   }
 })
+
+const createCid = () => {
+  return cid++ % 1_000
+}
+
+const createPromise = <Type>(cid: number): Promise<Type> => {
+  return new Promise((resolve) => promises.set(cid, resolve))
+}
+
+const execPromise = (data: any) => {
+  promises.get(data.cid)(data)
+  promises.delete(data.cid)
+}
 
 export const on = (eventName: string, callback: Callback) => {
   if (eventName === 'tick') {
@@ -61,20 +79,24 @@ export const on = (eventName: string, callback: Callback) => {
 /**
  * Initializes ammo
  */
-const init = async () => {
-  worker.postMessage({ event: events.INIT })
-
-  return new Promise((resolve) => promises.set(events.INIT, resolve))
+const init = () => {
+  const cid = createCid()
+  worker.postMessage({ event: events.INIT, cid })
+  return createPromise<void>(cid)
 }
 
-const run = async () => {
-  worker.postMessage({ event: events.RUN })
+const run = () => {
+  const cid = createCid()
+  worker.postMessage({ event: events.RUN, cid })
   ammo.running = true
+  return createPromise<void>(cid)
 }
 
 const pause = async () => {
-  worker.postMessage({ event: events.PAUSE })
+  const cid = createCid()
+  worker.postMessage({ event: events.PAUSE, cid })
   ammo.running = false
+  return createPromise<void>(cid)
 }
 
 const setGravity = (x: number, y: number, z: number) => {
@@ -109,6 +131,18 @@ const createRigidBodies = (bodies: Body[]) => {
   worker.postMessage({ event: events.CREATE_RIGIDBODIES, bodies })
 }
 
+const destroyRigidBodies = (ids: Uint16Array) => {
+  const cid = createCid()
+  worker.postMessage({ event: events.DESTROY_RIGIDBODIES, cid, ids })
+  return createPromise<void>(cid)
+}
+
+const destroyAllRigidBodies = () => {
+  const cid = createCid()
+  worker.postMessage({ event: events.DESTROY_ALL_RIGIDBODIES, cid })
+  return createPromise<void>(cid)
+}
+
 const createTriggers = (triggers: TriggerVolume[]) => {
   worker.postMessage({ event: events.CREATE_TRIGGERS, triggers })
 }
@@ -123,6 +157,14 @@ const applyCentralImpulses = (impulses: Float32Array) => {
 
 const applyCentralForces = (forces: Float32Array) => {
   worker.postMessage({ event: events.APPLY_CENTRAL_FORCES, forces })
+}
+
+const enableBody = (id: number) => {
+  worker.postMessage({ event: events.ENABLE_BODY, id })
+}
+
+const disableBody = (id: number) => {
+  worker.postMessage({ event: events.DISABLE_BODY, id })
 }
 
 interface Hit {
@@ -148,8 +190,9 @@ interface Hit {
  * @returns - A promise that resolves into a hit result.
  */
 const raycast = (x1: number, y1: number, z1: number, x2: number, y2: number, z2: number): Promise<Hit> => {
-  worker.postMessage({ event: events.RAYCAST, x1, y1, z1, x2, y2, z2 })
-  return new Promise((resolve) => promises.set(events.RAYCAST, resolve))
+  const cid = createCid()
+  worker.postMessage({ event: events.RAYCAST, cid, x1, y1, z1, x2, y2, z2 })
+  return new Promise((resolve) => promises.set(cid, (data: any) => resolve(data.hit)))
 }
 
 export const ammo = {
@@ -169,9 +212,13 @@ export const ammo = {
   setTransform,
   setTransforms,
   createRigidBodies,
+  destroyRigidBodies,
+  destroyAllRigidBodies,
   createTriggers,
   applyCentralImpulse,
   applyCentralImpulses,
   applyCentralForces,
+  enableBody,
+  disableBody,
   raycast,
 }

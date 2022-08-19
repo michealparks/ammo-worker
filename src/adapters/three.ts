@@ -20,6 +20,10 @@ export const instancedMeshMap = new Map<number, { mesh: THREE.InstancedMesh, ind
 
 export let id = -1
 
+const resetCursor = () => {
+  id = -1
+}
+
 const createTransformFromMesh = ({ position, quaternion }: THREE.Mesh) => {
   const transform = new Float32Array(7)
   transform[0] = position.x,
@@ -45,7 +49,6 @@ const createTransformFromInstancedMesh = (mesh: THREE.InstancedMesh, index: numb
   transform[6] = quat.w
   return transform
 }
-
 
 export const createBodyData = (
   mesh: THREE.Mesh,
@@ -135,6 +138,14 @@ export const addInstancedMesh = (mesh: THREE.InstancedMesh, data: Partial<Body>)
   ammo.createRigidBodies(bodies)
 
   return ids
+}
+
+export const destroyAllRigidBodies = () => {
+  resetCursor()
+  dynamicBodyMeshes.clear()
+  meshMap.clear()
+  idMap.clear()
+  return ammo.destroyAllRigidBodies()
 }
 
 export const computeScale = (matrixWorld: Float32Array) => {

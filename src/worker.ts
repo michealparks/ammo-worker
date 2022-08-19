@@ -22,7 +22,7 @@ let fps = 0
 const bodies = new Map<number, Ammo.btRigidBody>()
 const dynamicBodies = new Set<Ammo.btRigidBody>()
 
-const init = async () => {
+const init = async (cid: number) => {
   ammo = await AmmoModule({
     locateFile() {
       return import.meta.env.AMMO_WASM_PATH
@@ -61,7 +61,7 @@ const init = async () => {
     // }, 1000)
   }
 
-  postMessage({ event: events.INIT })
+  postMessage({ event: events.INIT, cid })
 }
 
 /**
@@ -246,23 +246,32 @@ const destroyRigidBody = (body: Ammo.btRigidBody) => {
     ammo.destroy(motionState)
   }
 
+  world.removeRigidBody(body)
   ammo.destroy(body)
 }
 
-const destroyRigidBodies = (ids: Uint16Array) => {
+const destroyRigidBodies = (cid: number, ids: Uint16Array) => {
   for (let i = 0, l = ids.length, id = 0; i < l; i += 1, id = ids[i]) {
-    destroyRigidBody(bodies.get(id)!)
+    const body = bodies.get(id)!
+    destroyRigidBody(body)
     bodies.delete(id)
+  
+    if (body.type === constants.BODYTYPE_DYNAMIC) {
+      dynamicBodies.delete(body)
+    }
   }
+
+  postMessage({ event: events.DESTROY_RIGIDBODIES, cid })
 }
 
-const destroyAllRigidBodies = () => {
+const destroyAllRigidBodies = (cid: number) => {
   for (const [id] of bodies) {
     destroyRigidBody(bodies.get(id)!)
   }
 
-  bodies.clear()
   dynamicBodies.clear()
+  bodies.clear()
+  postMessage({ event: events.DESTROY_ALL_RIGIDBODIES, cid })
 }
 
 const createTriggers = (objects: TriggerVolume[]) => {
@@ -277,24 +286,28 @@ const createTriggers = (objects: TriggerVolume[]) => {
 /**
  * Resume the simulation.
  */
-const run = () => {
+const run = (cid: number) => {
   now = then = performance.now()
   if (import.meta.env.THREE_XR === 'true') {
     tickId = self.setInterval(tick, 1000 / 90)
   } else {
     tickId = requestAnimationFrame(tick)
   }
+
+  postMessage({ event: events.RUN, cid })
 }
 
 /**
  * Pause the simulation
  */
-const pause = () => {
+const pause = (cid: number) => {
   if (import.meta.env.THREE_XR === 'true') {
     clearInterval(tickId)
   } else {
     cancelAnimationFrame(tickId)
   }
+
+  postMessage({ event: events.PAUSE, cid })
 }
 
 const transforms = new Float32Array(Number.parseInt(import.meta.env.AMMO_MAX_BODIES, 10) * 7)
@@ -469,7 +482,7 @@ const activate = (id: number) => {
  * 
  * @param id - The id of the body
  */
-const enableSimulation = (id: number) => {
+const enableBody = (id: number) => {
   const body = bodies.get(id)!
 
   switch (body.type) {
@@ -492,7 +505,7 @@ const enableSimulation = (id: number) => {
  * 
  * @param id - The id of the body
  */
-const disableSimulation = (id: number) => {
+const disableBody = (id: number) => {
   const body = bodies.get(id)!
 
   // set activation state to disable simulation to avoid body.isActive() to return
@@ -500,7 +513,7 @@ const disableSimulation = (id: number) => {
   body.forceActivationState(constants.BODYSTATE_DISABLE_SIMULATION)
 }
 
-const raycast = (x1: number, y1: number, z1: number, x2: number, y2: number, z2: number) => {
+const raycast = (cid: number, x1: number, y1: number, z1: number, x2: number, y2: number, z2: number) => {
   vec.setValue(x1, y1, z1)
   vec2.setValue(x2, y2, z2)
   const rayCallback = new ammo.ClosestRayResultCallback(vec, vec2);
@@ -513,8 +526,9 @@ const raycast = (x1: number, y1: number, z1: number, x2: number, y2: number, z2:
     const point = rayCallback.m_hitPointWorld
     const normal = rayCallback.m_hitNormalWorld
 
-    return postMessage({
+    postMessage({
       event: events.RAYCAST,
+      cid,
       hit: {
         id: body.id,
         x: point.x(),
@@ -525,9 +539,11 @@ const raycast = (x1: number, y1: number, z1: number, x2: number, y2: number, z2:
         nz: normal.z(),
       }
     })
+  } else {
+    postMessage({ event: events.RAYCAST, cid })
   }
 
-  return postMessage({ event: events.RAYCAST })
+  ammo.destroy(rayCallback)
 }
 
 self.addEventListener('message', ({ data }) => {
@@ -535,7 +551,11 @@ self.addEventListener('message', ({ data }) => {
     case events.SET_POSITION:
       return setPosition(data.id, data.x, data.y, data.z)
     case events.SET_TRANSFORM:
-      return setTransform(data.id, data.x, data.y, data.z, data.qx, data.qy, data.qz, data.qw)
+      return setTransform(
+        data.id,
+        data.x, data.y, data.z,
+        data.qx, data.qy, data.qz, data.qw
+      )
     case events.SET_TRANSFORMS:
       return setTransforms(data.transforms)
     case events.APPLY_CENTRAL_IMPULSE:
@@ -545,9 +565,17 @@ self.addEventListener('message', ({ data }) => {
     case events.APPLY_CENTRAL_FORCES:
       return applyCentralForces(data.forces)
     case events.RAYCAST:
-      return raycast(data.x1, data.y1, data.z1, data.x2, data.y2, data.z2)
+      return raycast(
+        data.cid,
+        data.x1, data.y1, data.z1,
+        data.x2, data.y2, data.z2
+      )
     case events.CREATE_RIGIDBODIES:
       return createRigidBodies(data.bodies)
+    case events.DESTROY_RIGIDBODIES:
+      return destroyRigidBodies(data.cid, data.ids)
+    case events.DESTROY_ALL_RIGIDBODIES:
+      return destroyAllRigidBodies(data.cid)
     case events.CREATE_TRIGGERS:
       return createTriggers(data.triggers)
     case events.SET_GRAVITY:
@@ -558,12 +586,16 @@ self.addEventListener('message', ({ data }) => {
       return setMask(data.id, data.mask)
     case events.SET_MASS:
       return setMass(data.id, data.mass)
+    case events.ENABLE_BODY:
+      return enableBody(data.id)
+    case events.DISABLE_BODY:
+      return disableBody(data.id)
     case events.RUN:
-      return run()
+      return run(data.cid)
     case events.PAUSE:
-      return pause()
+      return pause(data.cid)
     case events.INIT:
-      return init()
+      return init(data.cid)
   }
 
   throw new Error(data)
@@ -575,8 +607,8 @@ export const api = {
   applyForce,
   applyCentralForce,
   applyCentralForces,
-  disableSimulation,
-  enableSimulation,
+  disableBody,
+  enableBody,
   isActive,
   activate,
   raycast,

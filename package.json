@@ -28,17 +28,17 @@
     "check": "tsc"
   },
   "devDependencies": {
-    "@react-three/drei": "^9.20.0",
+    "@react-three/drei": "^9.22.7",
     "@rollup/plugin-alias": "^3.1.9",
     "@rollup/plugin-replace": "^4.0.0",
     "@tweakpane/core": "^1.1.0",
     "@types/ammo.js": "github:osman-turan/ammo.js-typings",
-    "@types/three": "^0.143.0",
-    "@vitejs/plugin-basic-ssl": "^0.1.1",
+    "@types/three": "^0.143.1",
+    "@vitejs/plugin-basic-ssl": "^0.1.2",
     "ammo.js": "github:kripken/ammo.js",
-    "nice-color-palettes": "^3.0.0",
+    "nice-color-palettes": "^2.0.0",
     "postprocessing": "^6.28.5",
-    "rollup": "^2.77.2",
+    "rollup": "^2.78.0",
     "rollup-plugin-copy": "^3.4.0",
     "rollup-plugin-filesize": "^9.1.2",
     "rollup-plugin-terser": "^7.0.2",
@@ -47,6 +47,6 @@
     "tslib": "^2.4.0",
     "tweakpane": "^3.1.0",
     "typescript": "^4.7.4",
-    "vite": "^3.0.5"
+    "vite": "^3.0.8"
   }
 }

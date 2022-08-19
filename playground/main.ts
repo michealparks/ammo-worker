@@ -11,6 +11,7 @@ import './lib/pane'
 import { ammo } from '../src/main'
 import * as physics from '../src/adapters/three'
 import * as constants from './constants'
+import * as utils from './demos/lib/utils'
 import { floor, floorSize, floorHeight } from './demos/lib/floor'
 
 const demos = import.meta.glob('./demos/*.ts')
@@ -25,6 +26,9 @@ renderer.xr.addEventListener('sessionstart', () => {
 
 const main = async () => {
   await ammo.init()
+
+  utils.createFloorRigidBody()
+  utils.createFloorTrigger()
 
   physics.addMesh(floor, {
     type: ammo.BODYTYPE_STATIC,
@@ -46,9 +50,6 @@ const main = async () => {
     case 'i':
       const count = physics.id
       const magnitude = 20
-      // const ids = new Uint16Array(constants.NUM_MESHES)
-
-      
       const impulses = new Float32Array(constants.NUM_MESHES * 4)
 
       for (let i = 0, j = 0; j < count; i += 4, j += 1) {
@@ -100,22 +101,11 @@ const main = async () => {
     }
   })
 
-  ammo.createTriggers([
-    {
-      id: -2,
-      shape: ammo.BODYSHAPE_BOX,
-      transform: new Float32Array([0, -2001, 0, 0, 0, 0, 1]),
-      halfExtents: {
-        x: 2000,
-        y: 2000,
-        z: 2000,
-      }
-    }
-  ])
-
   ammo.run()
 
-  update(() => demoModule.update?.())
+  if (demoModule.update) {
+    update(() => demoModule.update())
+  }
 
   run()
 }
