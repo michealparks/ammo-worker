@@ -1,3 +1,4 @@
+import 'three-kit/debug'
 import * as constants from './constants'
 import * as events from './constants/events'
 import type { Body, TriggerVolume } from './types'
