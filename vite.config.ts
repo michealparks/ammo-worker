@@ -3,6 +3,19 @@ import { defineConfig } from 'vite'
 import ssl from '@vitejs/plugin-basic-ssl'
 
 export default defineConfig({
+  server: {
+    port: 5174,
+    strictPort: true,
+    https: true,
+    fs: {
+      strict: true,
+      allow: ['.'],
+    },
+    headers: {
+      'Cross-Origin-Opener-Policy': 'same-origin',
+      'Cross-Origin-Embedder-Policy': 'require-corp',
+    },
+  },
   build: {
     rollupOptions: {
       input: {
@@ -17,11 +30,4 @@ export default defineConfig({
   plugins: [
     ssl(),
   ],
-  server: {
-    https: true,
-    headers: {
-      'Cross-Origin-Opener-Policy': 'same-origin',
-      'Cross-Origin-Embedder-Policy': 'require-corp',
-    }
-  }
 })

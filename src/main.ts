@@ -156,6 +156,26 @@ const applyCentralImpulses = (impulses: Float32Array) => {
   worker.postMessage({ event: events.APPLY_CENTRAL_IMPULSES, impulses })
 }
 
+const applyTorqueImpulse = (id: number, x: number, y: number, z: number) => {
+  worker.postMessage({ event: events.APPLY_TORQUE_IMPULSE, id, x, y, z })
+}
+
+const applyTorqueImpulses = (impulses: Float32Array) => {
+  worker.postMessage({ event: events.APPLY_TORQUE_IMPULSES, impulses })
+}
+
+const applyCentralAndTorqueImpulse = (
+  id: number,
+  x: number, y: number, z: number,
+  tx: number, ty: number, tz: number
+) => {
+  worker.postMessage({ event: events.APPLY_CENTRAL_AND_TORQUE_IMPULSE, id, x, y, z, tx, ty, tz })
+}
+
+const applyCentralAndTorqueImpulses = (impulses: Float32Array) => {
+  worker.postMessage({ event: events.APPLY_CENTRAL_AND_TORQUE_IMPULSES, impulses })
+}
+
 const applyCentralForces = (forces: Float32Array) => {
   worker.postMessage({ event: events.APPLY_CENTRAL_FORCES, forces })
 }
@@ -218,6 +238,10 @@ export const ammo = {
   createTriggers,
   applyCentralImpulse,
   applyCentralImpulses,
+  applyTorqueImpulse,
+  applyTorqueImpulses,
+  applyCentralAndTorqueImpulse,
+  applyCentralAndTorqueImpulses,
   applyCentralForces,
   enableBody,
   disableBody,

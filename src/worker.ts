@@ -387,7 +387,10 @@ const applyCentralImpulse = (id: number, x: number, y: number, z: number) => {
  */
 const applyCentralImpulses = (impulses: Float32Array) => {
   for (let shift = 0, length = impulses.length; shift < length; shift += 4) {
-    applyCentralImpulse(impulses[shift + 0], impulses[shift + 1], impulses[shift + 2], impulses[shift + 3])
+    applyCentralImpulse(
+      impulses[shift + 0],
+      impulses[shift + 1], impulses[shift + 2], impulses[shift + 3]
+    )
   }
 }
 
@@ -404,6 +407,38 @@ const applyTorqueImpulse = (id: number, x: number, y: number, z: number) => {
   body.activate()
   vec.setValue(x, y, z)
   body.applyTorqueImpulse(vec)
+}
+
+const applyTorqueImpulses = (impulses: Float32Array) => {
+  for (let shift = 0, length = impulses.length; shift < length; shift += 4) {
+    applyTorqueImpulse(
+      impulses[shift + 0],
+      impulses[shift + 1], impulses[shift + 2], impulses[shift + 3]
+    )
+  }
+}
+
+const applyCentralAndTorqueImpulse = (
+  id: number,
+  x: number, y: number, z: number,
+  tx: number, ty: number, tz: number
+) => {
+  const body = bodies.get(id)!
+  body.activate()
+  vec.setValue(x, y, z)
+  body.applyCentralImpulse(vec)
+  vec.setValue(tx, ty, tz)
+  body.applyTorqueImpulse(vec)
+}
+
+const applyCentralAndTorqueImpulses = (impulses: Float32Array) => {
+  for (let shift = 0, length = impulses.length; shift < length; shift += 7) {
+    applyCentralAndTorqueImpulse(
+      impulses[shift + 0],
+      impulses[shift + 1], impulses[shift + 2], impulses[shift + 3],
+      impulses[shift + 4], impulses[shift + 5], impulses[shift + 6]
+    )
+  }
 }
 
 /**
@@ -436,7 +471,11 @@ const applyTorque = (id: number, x: number, y: number, z: number) => {
  * @param {number} pz - The z-component of a world-space offset from the body's position
  * where the force is applied.
  */
-const applyForce = (id: number, x: number, y: number, z: number, px: number, py: number, pz: number) => {
+const applyForce = (
+  id: number,
+  x: number, y: number, z: number,
+  px: number, py: number, pz: number
+) => {
   const body = bodies.get(id)!
   body.activate()
   vec.setValue(x, y, z)
@@ -564,6 +603,18 @@ self.addEventListener('message', ({ data }) => {
       return applyCentralImpulses(data.impulses)
     case events.APPLY_CENTRAL_FORCES:
       return applyCentralForces(data.forces)
+    case events.APPLY_TORQUE_IMPULSE:
+      return applyTorqueImpulse(data.id, data.x, data.y, data.z)
+    case events.APPLY_TORQUE_IMPULSES:
+      return applyTorqueImpulses(data.impulses)
+    case events.APPLY_CENTRAL_AND_TORQUE_IMPULSE:
+      return applyCentralAndTorqueImpulse(
+        data.id,
+        data.x, data.y, data.z,
+        data.tx, data.ty, data.tz
+      )
+    case events.APPLY_CENTRAL_AND_TORQUE_IMPULSES:
+      return applyCentralAndTorqueImpulses(data.impulses)
     case events.RAYCAST:
       return raycast(
         data.cid,
@@ -600,16 +651,3 @@ self.addEventListener('message', ({ data }) => {
 
   throw new Error(data)
 })
-
-export const api = {
-  applyTorque,
-  applyTorqueImpulse,
-  applyForce,
-  applyCentralForce,
-  applyCentralForces,
-  disableBody,
-  enableBody,
-  isActive,
-  activate,
-  raycast,
-}

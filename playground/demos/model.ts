@@ -43,7 +43,7 @@ const results = physics.computeShape(
   [indexes],
   { type: BODYSHAPE_BOX }
 )
-console.log(results)
+  console.log(results)
 
 physics.addInstancedMesh(meshes, {
   type: ammo.BODYTYPE_DYNAMIC,
